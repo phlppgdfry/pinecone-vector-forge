@@ -21,6 +21,9 @@ install:
 test:
 	$(PYTHON) -m pytest tests/ -v
 
+eval:
+	$(PYTHON) -m src.cli.main evaluate
+
 seed:
 	$(PYTHON) -m src.seed.ingest
 
@@ -41,6 +44,9 @@ pc-status:
 
 pc-indexes:
 	pc index list
+
+push-cloud:
+	./bin/push-to-pinecone.sh
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

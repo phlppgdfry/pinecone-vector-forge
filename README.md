@@ -16,9 +16,13 @@
   Includes <b>Sparse-Dense Hybrid Search</b>, <b>Hardware Multi-Tenancy via Namespaces</b>, <b>Two-Stage Cross-Encoder Re-ranking</b>, a <b>Glassmorphism Web Dashboard</b>, and native <b>Pinecone CLI (<code>pc</code>)</b> GitOps automation.
 </p>
 
-[Quickstart](#-60-second-quickstart) • [Architecture](#-system-architecture) • [Core Patterns](#-production-patterns--snippets) • [Pinecone CLI Recipes](#-pinecone-cli-pc-integration) • [Web UI](#-glassmorphism-web-dashboard) • [Benchmarks](#-performance-benchmarks)
+[Live Showcase Site](https://phlppgdfry.github.io/pinecone-vector-forge/) • [Quickstart](#-60-second-quickstart) • [Architecture](#-system-architecture) • [Core Patterns](#-production-patterns--snippets) • [Pinecone CLI Recipes](#-pinecone-cli-pc-integration) • [Web UI](#-glassmorphism-web-dashboard) • [Benchmarks](#-performance-benchmarks)
 
 </div>
+
+---
+
+> 🌐 **Interactive Web Showcase**: Experience the live in-browser 2D vector visualizer and hybrid search simulator at **[phlppgdfry.github.io/pinecone-vector-forge](https://phlppgdfry.github.io/pinecone-vector-forge/)**!
 
 ---
 
@@ -93,13 +97,18 @@ make ui
 ```
 Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
-### 4. Connect Your Real Pinecone Account (Optional)
-Vector Forge auto-detects your Pinecone credentials in two simple ways:
-- **Method A (Pinecone CLI SSO)**:
+### 4. Connect Your Real Pinecone Account & Push to Cloud
+Vector Forge auto-detects your Pinecone credentials in three simple ways:
+- **Method A (Interactive One-Step Push Script)**:
+  ```bash
+  make push-cloud
+  ```
+  *Prompts for your key, configures the CLI, provisions the AWS serverless index, and pushes your knowledge base directly to your Pinecone Cloud Dashboard!*
+- **Method B (Pinecone CLI SSO Login)**:
   ```bash
   pc login
   ```
-- **Method B (Environment Variable)**:
+- **Method C (Environment Variable)**:
   Copy `.env.example` to `.env` and insert your key:
   ```bash
   PINECONE_API_KEY=pcsk_...

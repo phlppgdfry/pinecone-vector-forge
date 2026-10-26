@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinecone Vector Forge — Production Hybrid Search & RAG Architecture</title>
+  <link rel="stylesheet" href="showcase.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <!-- Navbar -->
+    <nav>
+      <a href="#" class="nav-brand">
+        <div class="brand-icon">🌲</div>
+        <span>Pinecone Vector Forge</span>
+      </a>
+      <div class="nav-links">
+        <a href="#demo" class="nav-link">Interactive Demo</a>
+        <a href="#cli" class="nav-link">Pinecone CLI (pc)</a>
+        <a href="#architecture" class="nav-link">Architecture</a>
+        <a href="https://github.com/phlppgdfry/pinecone-vector-forge" target="_blank" class="btn-github">
+          <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+          </svg>
+          View on GitHub
+        </a>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-pill">
+        <span>⚡ Production Vector Intelligence Engine</span>
+      </div>
+      <h1>Enterprise <span>Vector Search</span> & RAG Architecture</h1>
+      <p class="hero-sub">
+        Staff-level reference implementation powered by <strong>Pinecone Serverless</strong>. Featuring convex Sparse-Dense Hybrid Search, multi-tenant hardware namespace isolation, hierarchical parent-document chunking, and native <strong>Pinecone CLI (<code>pc</code>)</strong> GitOps tooling.
+      </p>
+      <div class="hero-cta">
+        <a href="#demo" class="btn-primary">Try Live In-Browser Demo</a>
+        <a href="https://github.com/phlppgdfry/pinecone-vector-forge#readme" target="_blank" class="btn-secondary">Explore Architecture Docs</a>
+      </div>
+    </section>
+
+    <!-- Quantitative Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-num">0.9048</div>
+        <div class="metric-label">Mean Reciprocal Rank (MRR@K)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">100%</div>
+        <div class="metric-label">Evaluation Recall@3 Hit Rate</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">&lt; 10ms</div>
+        <div class="metric-label">Serverless ANN Retrieval Latency</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num">1536</div>
+        <div class="metric-label">Vector Dimensionality (Cosine)</div>
+      </div>
+    </div>
+
+    <!-- Interactive Playground Section -->
+    <section id="demo" class="glass-panel">
+      <div class="section-header" style="text-align: left; margin-bottom: 1.5rem;">
+        <div class="section-tag">Interactive Simulation</div>
+        <h2 class="section-title">2D Vector Embedding Visualizer & Hybrid Search</h2>
+      </div>
+
+      <div class="interactive-grid">
+        <!-- Canvas Visualizer -->
+        <div class="canvas-wrap">
+          <div class="canvas-toolbar">
+            <span>2D PCA Projection of 1536-d Vector Space</span>
+            <span>Live Query Raycasting</span>
+          </div>
+          <canvas id="vectorCanvas"></canvas>
+        </div>
+
+        <!-- Query Controls & Results -->
+        <div>
+          <div class="search-box">
+            <input type="text" id="demoSearchInput" class="search-input" value="Serverless scaling and idle cost">
+            <button id="btnDemoSearch" class="btn-primary" style="padding: 0.75rem 1.25rem;">Search</button>
+          </div>
+
+          <div class="chips">
+            <span class="chip" data-query="Serverless scaling and idle cost">💡 Serverless Idle Scaling</span>
+            <span class="chip" data-query="Zero-leakage multi-tenancy">🔒 Multi-Tenancy</span>
+            <span class="chip" data-query="Sparse-dense hybrid search with BM25">⚡ Hybrid BM25</span>
+            <span class="chip" data-query="RAG contextual chunking">📑 Hierarchical Chunks</span>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Convex &alpha;-Weighting Balance</span>
+              <span id="demoAlphaLabel" style="color: #00d2ff;">0.70 (70% Dense / 30% Sparse)</span>
+            </div>
+            <input type="range" id="demoAlphaSlider" class="slider" min="0.0" max="1.0" step="0.05" value="0.70">
+          </div>
+
+          <div class="results-list" id="demoResultsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pinecone CLI (pc) Terminal Simulator -->
+    <section id="cli" class="glass-panel">
+      <div class="section-header" style="text-align: left; margin-bottom: 1rem;">
+        <div class="section-tag">Developer Tooling</div>
+        <h2 class="section-title">Official Pinecone CLI (<code>pc</code>) Integration</h2>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1rem;">
+        Vector Forge integrates directly with the official Homebrew-installed <code>pc</code> command-line binary. Click any command below to test the simulated terminal output:
+      </p>
+
+      <div class="term-buttons">
+        <button class="term-btn" data-cmd="pc version">pc version</button>
+        <button class="term-btn" data-cmd="pc login">pc login</button>
+        <button class="term-btn" data-cmd="pc index list">pc index list</button>
+        <button class="term-btn" data-cmd="pc index describe">pc index describe</button>
+        <button class="term-btn" data-cmd="pc index record search">pc index record search</button>
+      </div>
+
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="term-dot red"></div>
+          <div class="term-dot yellow"></div>
+          <div class="term-dot green"></div>
+          <div class="term-title">terminal ~ vectorforge</div>
+        </div>
+        <div class="term-body" id="terminalOutput"></div>
+      </div>
+    </section>
+
+    <!-- Architecture Patterns Overview -->
+    <section id="architecture" style="margin-bottom: 4rem;">
+      <div class="section-header">
+        <div class="section-tag">Core Capabilities</div>
+        <h2 class="section-title">Engineered for Production Scale</h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="metric-card" style="text-align: left;">
+          <h3 style="color: #00d2ff; margin-bottom: 0.5rem;">Convex Hybrid Retrieval</h3>
+          <p style="color: var(--text-dim); font-size: 0.9rem;">
+            Blends neural dense embeddings (semantic intuition) with BM25 sparse frequencies (exact codes/SKUs) to eliminate blind spots in enterprise search.
+          </p>
+        </div>
+
+        <div class="metric-card" style="text-align: left;">
+          <h3 style="color: #a855f7; margin-bottom: 0.5rem;">Tenant Namespace Fencing</h3>
+          <p style="color: var(--text-dim); font-size: 0.9rem;">
+            Native hardware-level query partitioning guarantees that tenant queries never scan or leak data across client boundaries.
+          </p>
+        </div>
+
+        <div class="metric-card" style="text-align: left;">
+          <h3 style="color: #10b981; margin-bottom: 0.5rem;">Hallucination Guardrails</h3>
+          <p style="color: var(--text-dim); font-size: 0.9rem;">
+            Evaluates retrieval confidence thresholds and embeds verifiable bracketed citations <code>[1]</code>, <code>[2]</code> directly into generated responses.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>Pinecone Vector Forge • Open-Source MIT License</p>
+      <p style="margin-top: 0.35rem;">
+        Crafted with precision by <a href="https://github.com/phlppgdfry" target="_blank">Philippe Godfroy</a>
+      </p>
+    </footer>
+  </div>
+
+  <script src="showcase.js"></script>
+</body>
+</html>

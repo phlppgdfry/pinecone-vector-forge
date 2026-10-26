@@ -5,6 +5,8 @@ from .multi_tenancy import MultiTenantManager
 from .metadata_filtering import MetadataFilterBuilder
 from .contextual_chunking import HierarchicalChunker
 from .reranking import TwoStageReranker
+from .rag_agent import GroundedRAGAgent, GroundedResponse
+from .evaluation import RetrievalEvaluator, GOLDEN_DATASET
 
 __all__ = [
     "HybridSearchEngine",
@@ -12,4 +14,8 @@ __all__ = [
     "MetadataFilterBuilder",
     "HierarchicalChunker",
     "TwoStageReranker",
+    "GroundedRAGAgent",
+    "GroundedResponse",
+    "RetrievalEvaluator",
+    "GOLDEN_DATASET",
 ]

@@ -118,6 +118,43 @@ def search(
 
 
 @app.command()
+def evaluate(
+    alpha: float = typer.Option(0.70, "--alpha", "-a", help="Hybrid balance (0.0 to 1.0)"),
+    namespace: str = typer.Option("default", "--namespace", "-n", help="Pinecone namespace"),
+    top_k: int = typer.Option(3, "--top-k", "-k", help="Evaluation Top-K window")
+):
+    """Run quantitative evaluation suite (MRR@K, Recall@K, Precision@K)."""
+    from ..patterns.evaluation import RetrievalEvaluator
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]📊 Pinecone Vector Forge - Retrieval Benchmark Suite[/bold cyan]\n"
+        f"[dim]Evaluating over golden IR test suite (alpha={alpha}, Top-K={top_k})[/dim]",
+        border_style="cyan"
+    ))
+
+    evaluator = RetrievalEvaluator(top_k=top_k)
+    pc = get_pinecone_manager()
+    if pc.get_telemetry().total_vector_count == 0:
+        run_ingestion_pipeline(namespace=namespace)
+    res = evaluator.run_benchmark(alpha=alpha, namespace=namespace)
+
+    table = Table(title="Information Retrieval (IR) Benchmark Metrics", show_header=True, header_style="bold green")
+    table.add_column("Metric", style="bold")
+    table.add_column("Score", style="cyan")
+    table.add_column("Industry Target", style="dim")
+
+    table.add_row("Mean Reciprocal Rank (MRR@K)", f"{res.mrr_at_k:.4f}", "> 0.70")
+    table.add_row("Recall@K (Hit Rate)", f"{res.recall_at_k * 100:.1f}%", "> 80.0%")
+    table.add_row("Precision@K", f"{res.precision_at_k * 100:.1f}%", "> 50.0%")
+    table.add_row("Avg Query Latency", f"{res.avg_latency_ms:.2f} ms", "< 25.0 ms")
+    table.add_row("Evaluated Queries", str(res.total_eval_queries), "7 Golden Pairs")
+
+    console.print(table)
+    console.print()
+
+
+@app.command()
 def demo():
     """Run an automated showcase tour demonstrating hybrid retrieval and filtering."""
     console.print()
