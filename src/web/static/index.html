@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinecone Vector Forge — Production Hybrid Search & RAG Engine</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="logo-icon">🌲</div>
+        <div>
+          <h1>Pinecone Vector Forge</h1>
+          <p>Production Vector Intelligence & Hybrid Search • Built by Philippe Godfroy</p>
+        </div>
+      </div>
+      <div id="connectionStatus" class="badge-status">
+        <span class="pulse-dot"></span> Checking Pinecone Connection...
+      </div>
+    </header>
+
+    <!-- Telemetry Cards -->
+    <div class="telemetry-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Indexed Vectors</div>
+        <div id="statTotalVectors" class="stat-value">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Vector Dimensionality</div>
+        <div id="statDimension" class="stat-value">1536</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Distance Metric</div>
+        <div id="statMetric" class="stat-value">COSINE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Partitioned Namespaces</div>
+        <div id="statNamespaces" class="stat-value">--</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-search">Vector Search Playground</button>
+      <button class="tab-btn" data-tab="tab-ingest">Ingestion Sandbox</button>
+      <button class="tab-btn" data-tab="tab-patterns">Architecture & Patterns</button>
+      <button class="tab-btn" data-tab="tab-cli">Pinecone CLI (pc) Recipes</button>
+    </div>
+
+    <!-- Tab 1: Search Playground -->
+    <div id="tab-search" class="tab-panel active">
+      <div class="card">
+        <div class="search-bar-wrap">
+          <input type="text" id="searchInput" class="search-input" placeholder="Ask a question or enter a semantic query..." value="Serverless scaling and idle costs">
+          <button id="btnSearch" class="btn-primary">Execute Search</button>
+        </div>
+
+        <!-- Quick Query Chips -->
+        <div class="chips">
+          <span class="chip" data-query="How does serverless scaling handle idle costs?">💡 Serverless Idle Scaling</span>
+          <span class="chip" data-query="Zero-leakage multi-tenancy and namespace isolation">🔒 Enterprise Multi-Tenancy</span>
+          <span class="chip" data-query="Sparse-dense hybrid search with BM25 and alpha tuning">⚡ Hybrid Search & RRF</span>
+          <span class="chip" data-query="Hierarchical chunking and parent-document retrieval in RAG">📑 Hierarchical Chunking</span>
+          <span class="chip" data-query="Two-stage retrieval and Pinecone reranker boost">🎯 Two-Stage Rerank</span>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-row">
+          <div class="control-group">
+            <div class="control-label">
+              <span>Hybrid Search Balance (&alpha;)</span>
+              <span id="alphaValue" style="color: #00d2ff;">0.70 (Hybrid: 70% Dense / 30% Sparse)</span>
+            </div>
+            <input type="range" id="alphaSlider" class="slider" min="0.0" max="1.0" step="0.05" value="0.70">
+          </div>
+
+          <div class="control-group">
+            <label class="control-label" for="categorySelect">
+              <span>Metadata Category Filter</span>
+            </label>
+            <select id="categorySelect">
+              <option value="all">All Categories (Global Index)</option>
+              <option value="vector_architecture">Vector Architecture</option>
+              <option value="retrieval_engineering">Retrieval Engineering</option>
+              <option value="rag_patterns">RAG Patterns</option>
+              <option value="security_compliance">Security & Compliance</option>
+              <option value="devops_automation">DevOps & Automation</option>
+            </select>
+          </div>
+
+          <div class="control-group" style="justify-content: center;">
+            <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; color: var(--text-primary); font-size: 0.9rem;">
+              <input type="checkbox" id="rerankToggle" checked style="width: 18px; height: 18px; accent-color: #00d2ff;">
+              <span>Enable Two-Stage Cross-Encoder Rerank</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Search Results -->
+        <div class="results-header">
+          <h3>Nearest Neighbor Vector Results</h3>
+          <div id="searchMeta" style="font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 1rem;"></div>
+        </div>
+        <div id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Ingestion Sandbox -->
+    <div id="tab-ingest" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 0.5rem;">Hierarchical Document Ingestion Pipeline</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Documents submitted here are automatically segmented into semantic overlapping chunks, transformed into 1536-d dense embeddings + BM25 sparse vectors, and upserted directly into the active Pinecone namespace.
+        </p>
+
+        <div class="form-group">
+          <label>Document Title</label>
+          <input type="text" id="ingestTitle" class="form-input" placeholder="e.g., Optimizing Vector Search Latency with SIMD Hardware">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="ingestCategory" class="form-input" placeholder="e.g., vector_architecture">
+          </div>
+          <div class="form-group">
+            <label>Tags (comma-separated)</label>
+            <input type="text" id="ingestTags" class="form-input" placeholder="pinecone, optimization, simd, hardware">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Document Content / Markdown Body</label>
+          <textarea id="ingestContent" class="form-textarea" placeholder="Paste full article or technical documentation text here..."></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <button id="btnIngest" class="btn-primary">Vectorize & Upsert to Pinecone</button>
+          <div id="ingestStatus" style="font-size: 0.88rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Architecture & Patterns -->
+    <div id="tab-patterns" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">Core Production Architecture Patterns</h3>
+        
+        <div style="margin-bottom: 1.75rem;">
+          <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">1. Hybrid Convex Search (&alpha;-Weighting)</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Dense embeddings capture semantic intent while sparse vectors (BM25/SPLADE) catch exact product codes, acronyms, and rare entity IDs. The convex formula <code>score = &alpha; &times; dense + (1 - &alpha;) &times; sparse</code> ensures balanced retrieval.
+          </p>
+          <div class="code-block">
+hits = index.query(
+    vector=[v * alpha for v in dense_embedding],
+    sparse_vector={"indices": s["indices"], "values": [v * (1 - alpha) for v in s["values"]]},
+    top_k=10,
+    namespace="production"
+)</div>
+        </div>
+
+        <div style="margin-bottom: 1.75rem;">
+          <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">2. Hardware-Isolated Multi-Tenant Namespaces</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Pinecone namespaces enable strict isolation for B2B SaaS tenants without incurring the idle cost of dedicated vector indexes.
+          </p>
+          <div class="code-block">
+# Query strictly fenced to tenant boundary
+index.query(vector=query_vector, namespace=f"tenant_{tenant_id}", filter={"tenant_id": tenant_id})</div>
+        </div>
+
+        <div>
+          <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">3. Hierarchical Parent-Document Context Hydration</h4>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">
+            Index compact 300-token chunks for pinpoint vector search accuracy, and store parent document pointers in metadata so LLM generators receive complete contextual passages without hallucination.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Pinecone CLI Recipes -->
+    <div id="tab-cli" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 1rem;">Official Pinecone CLI (pc) Workflow Cheat Sheet</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          The official Pinecone CLI (<code>pc</code>) is installed on your system. Use these recipes for day-to-day operations and CI/CD vector database management:
+        </p>
+
+        <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">1. Authenticate with Pinecone</h4>
+        <div class="code-block">
+# Launch browser-based SSO login
+pc login
+
+# Check active session status
+pc auth status</div>
+
+        <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">2. Serverless Index Operations</h4>
+        <div class="code-block">
+# List all active indexes
+pc index list
+
+# Create a Serverless index in AWS us-east-1
+pc index create --name vector-forge-knowledge --dimension 1536 --metric cosine --spec-cloud aws --spec-region us-east-1
+
+# Inspect index statistics & vector count
+pc index describe --name vector-forge-knowledge</div>
+
+        <h4 style="color: #00d2ff; margin-bottom: 0.4rem;">3. Namespace & Vector Management</h4>
+        <div class="code-block">
+# List namespaces in an index
+pc index namespace list --index vector-forge-knowledge
+
+# Perform vector search from terminal
+pc index record search --index vector-forge-knowledge --namespace default --top-k 5</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Pinecone Vector Forge • Open-Source Production Architecture • MIT License</p>
+      <p style="margin-top: 0.3rem;">Designed & Engineered by Philippe Godfroy</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

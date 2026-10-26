@@ -1,0 +1,36 @@
+name: CI Verification & Vector Benchmark Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Pytest & Benchmark Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Execute Pytest Suite
+        run: |
+          pytest tests/ -v --junitxml=pytest-report.xml
+
+      - name: Verify CLI Commands
+        run: |
+          python -m src.cli.main status
+          python -m src.cli.main demo
