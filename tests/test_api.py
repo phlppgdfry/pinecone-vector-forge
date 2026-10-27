@@ -81,3 +81,11 @@ def test_metrics_endpoint():
     res = client.get("/api/metrics")
     assert res.status_code == 200
     assert "vectorforge_total_vectors" in res.text
+
+
+def test_assistant_chat_endpoint():
+    res = client.post("/api/assistant/chat", json={"query": "How does serverless scaling handle idle costs?"})
+    assert res.status_code == 200
+    data = res.json()
+    assert "answer" in data
+    assert len(data["answer"]) > 0

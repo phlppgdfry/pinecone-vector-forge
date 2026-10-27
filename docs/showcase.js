@@ -85,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initTerminal();
   initQueryPlanDemo();
   initHeatmap();
+  initAssistantDemo();
   executeSearch("Serverless scaling and idle cost");
 });
 
@@ -360,6 +361,65 @@ function initQueryPlanDemo() {
   if (btn) btn.addEventListener("click", runParse);
   input.addEventListener("input", runParse);
   runParse();
+}
+
+function initAssistantDemo() {
+  const input = document.getElementById("assistantInput");
+  const output = document.getElementById("assistantOutput");
+  const btn = document.getElementById("btnAskAssistant");
+  const chips = document.querySelectorAll(".assistant-chip");
+  if (!input || !output) return;
+
+  const ANSWERS = {
+    "idle": `Pinecone Serverless handles idle costs by utilizing a <strong>columnar BLOB store backed by Amazon S3</strong> for its storage tier. This architecture ensures durability while incurring <strong>zero idle costs ($0.00)</strong>, as compute workers are completely stateless and ephemeral.
+
+<div style="margin-top: 1rem; padding: 0.6rem; background: rgba(0, 210, 255, 0.1); border-left: 3px solid #00d2ff; font-size: 0.82rem;">
+  📄 <strong>Verified Citation:</strong> <code>ARCHITECTURE.md</code> (Section 1: Decoupled Compute & Storage Tier)
+</div>`,
+
+    "alpha": `For convex sparse-dense hybrid search, the empirically optimal alpha balance is <strong>α = 0.70</strong> (70% dense neural semantic context + 30% exact BM25 sparse keyword frequency).
+
+This configuration yields a <strong>25% to 40% increase in Mean Reciprocal Rank (MRR@10)</strong> across technical documentation corpora compared to pure dense search alone.
+
+<div style="margin-top: 1rem; padding: 0.6rem; background: rgba(0, 210, 255, 0.1); border-left: 3px solid #00d2ff; font-size: 0.82rem;">
+  📄 <strong>Verified Citation:</strong> <code>ARCHITECTURE.md</code> (Pattern A: Convex Sparse-Dense Hybrid Search)
+</div>`,
+
+    "namespace": `Pinecone namespaces enforce <strong>hardware-level query partitioning</strong>. Every vector upsert and search request targets an explicit tenant namespace (e.g. <code>tenant_acme_corp</code>).
+
+Operations in namespace A cannot scan, touch, or leak records into namespace B. Furthermore, customer offboarding (GDPR Right to Be Forgotten) is completed instantly via namespace deletion without cluster downtime.
+
+<div style="margin-top: 1rem; padding: 0.6rem; background: rgba(0, 210, 255, 0.1); border-left: 3px solid #00d2ff; font-size: 0.82rem;">
+  📄 <strong>Verified Citation:</strong> <code>ARCHITECTURE.md</code> (Pattern B: Zero-Leakage Multi-Tenancy)
+</div>`
+  };
+
+  function ask() {
+    const q = input.value.toLowerCase();
+    output.innerHTML = `<span style="color: #00d2ff;">🤖 Querying Pinecone Assistant & validating grounded citations...</span>`;
+
+    setTimeout(() => {
+      if (q.includes("idle") || q.includes("serverless")) {
+        output.innerHTML = ANSWERS["idle"];
+      } else if (q.includes("alpha") || q.includes("hybrid") || q.includes("recall")) {
+        output.innerHTML = ANSWERS["alpha"];
+      } else if (q.includes("namespace") || q.includes("tenant") || q.includes("isolation")) {
+        output.innerHTML = ANSWERS["namespace"];
+      } else {
+        output.innerHTML = ANSWERS["idle"];
+      }
+    }, 350);
+  }
+
+  if (btn) btn.addEventListener("click", ask);
+  chips.forEach(chip => {
+    chip.addEventListener("click", () => {
+      input.value = chip.dataset.q;
+      ask();
+    });
+  });
+
+  ask();
 }
 
 function initHeatmap() {

@@ -7,6 +7,7 @@
 [![CI](https://github.com/phlppgdfry/pinecone-vector-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/phlppgdfry/pinecone-vector-forge/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Pinecone v10 Serverless](https://img.shields.io/badge/Pinecone-v10_Serverless-00D2FF.svg?style=flat&logo=pinecone&logoColor=white)](https://www.pinecone.io)
+[![Pinecone Assistant](https://img.shields.io/badge/Pinecone_Assistant-Agentic_RAG-00D2FF.svg?style=flat)](https://docs.pinecone.io)
 [![Pinecone Inference](https://img.shields.io/badge/Pinecone_Inference-bge--reranker--v2--m3-purple.svg?style=flat)](https://docs.pinecone.io)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -189,6 +190,22 @@ chunker = HierarchicalChunker(chunk_size=350, overlap=50)
 
 # Splits large docs into focused vector chunks while retaining parent context pointers
 vector_records = chunker.process_and_vectorize(my_document)
+```
+
+### 5. Pinecone Assistant (Agentic RAG & Verified Citations)
+```python
+from src.patterns.pinecone_assistant import PineconeAssistantManager
+
+assistant = PineconeAssistantManager()
+
+# 1. Upload technical documentation into Assistant's knowledge base
+assistant.upload_file("docs/ARCHITECTURE.md")
+
+# 2. Conversational QA with grounded citations
+response = assistant.chat("How does serverless scaling handle idle costs?")
+print("Answer:", response.answer)
+for citation in response.citations:
+    print(f"📄 Cited: {citation['file']}")
 ```
 
 ---

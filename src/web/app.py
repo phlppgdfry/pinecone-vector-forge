@@ -19,6 +19,7 @@ from ..patterns.contextual_chunking import HierarchicalChunker
 from ..patterns.self_query import SelfQueryDeconstructor
 from ..patterns.hyde import HyDESearchEngine
 from ..patterns.similarity_matrix import SimilarityMatrixAnalyzer
+from ..patterns.pinecone_assistant import PineconeAssistantManager
 from ..seed.ingest import run_ingestion_pipeline
 from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
 
@@ -210,6 +211,31 @@ async def execute_hyde_search(req: SearchRequest):
         "total_hits": len(hits),
         "mode": "HyDE (Hypothetical Document Expansion)"
     }
+
+
+class AssistantChatRequest(BaseModel):
+    query: str
+
+
+@app.post("/api/assistant/chat")
+async def assistant_chat(req: AssistantChatRequest):
+    """Chat with managed Pinecone Assistant."""
+    mgr = PineconeAssistantManager()
+    resp = mgr.chat(req.query)
+    return {
+        "query": resp.query,
+        "answer": resp.answer,
+        "citations": resp.citations,
+        "assistant_name": resp.assistant_name,
+        "is_live_assistant": resp.is_live_assistant
+    }
+
+
+@app.get("/api/assistant/files")
+async def assistant_list_files():
+    """List documents indexed in Pinecone Assistant."""
+    mgr = PineconeAssistantManager()
+    return mgr.list_files()
 
 
 @app.get("/api/metrics")

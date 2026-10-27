@@ -104,3 +104,13 @@ def test_similarity_matrix_analyzer():
     # Diagonal should be 1.0 (self-similarity)
     assert abs(report.matrix[0][0] - 1.0) < 1e-3
     assert len(report.cluster_centroids) > 0
+
+
+def test_pinecone_assistant_manager():
+    from src.patterns.pinecone_assistant import PineconeAssistantManager
+    mgr = PineconeAssistantManager()
+    info = mgr.get_or_create_assistant()
+    assert "name" in info
+    assert info["name"] == "vector-forge-assistant"
+    files = mgr.list_files()
+    assert isinstance(files, list)

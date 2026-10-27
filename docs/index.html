@@ -16,10 +16,11 @@
         <span>Pinecone Vector Forge</span>
       </a>
       <div class="nav-links">
-        <a href="#demo" class="nav-link">3D Vector Universe</a>
+        <a href="#demo" class="nav-link">3D Universe</a>
+        <a href="#assistant" class="nav-link">Pinecone Assistant</a>
         <a href="#self-query" class="nav-link">Self-Query</a>
         <a href="#heatmap" class="nav-link">Heatmap</a>
-        <a href="#cli" class="nav-link">Pinecone CLI (pc)</a>
+        <a href="#cli" class="nav-link">CLI (pc)</a>
         <a href="#architecture" class="nav-link">Architecture</a>
         <a href="https://github.com/phlppgdfry/pinecone-vector-forge" target="_blank" class="btn-github">
           <svg height="18" width="18" viewBox="0 0 16 16" fill="currentColor">
@@ -106,6 +107,36 @@
 
           <div class="results-list" id="demoResultsList"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- Pinecone Assistant QA Section -->
+    <section id="assistant" class="glass-panel">
+      <div class="section-header" style="text-align: left; margin-bottom: 1rem;">
+        <div class="section-tag">Autonomous Agentic QA</div>
+        <h2 class="section-title">Pinecone Assistant (Grounded RAG with Citations)</h2>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1.25rem;">
+        Integrated directly with <strong>Pinecone Assistant</strong> (<code>pc.assistant.chat</code>). Ingests raw documentation files and returns synthesized answers with strict, verifiable file and page citations:
+      </p>
+
+      <div class="chips">
+        <span class="chip assistant-chip" data-q="How does Pinecone Serverless handle idle costs?">💡 Serverless Idle Costs</span>
+        <span class="chip assistant-chip" data-q="What is the optimal alpha for hybrid search and how much does it boost recall?">⚡ Optimal Hybrid Alpha</span>
+        <span class="chip assistant-chip" data-q="How does hardware namespace isolation prevent multi-tenant data leakage?">🔒 Multi-Tenant Namespaces</span>
+      </div>
+
+      <div class="search-box">
+        <input type="text" id="assistantInput" class="search-input" value="How does Pinecone Serverless handle idle costs and what is the optimal alpha for hybrid search?">
+        <button id="btnAskAssistant" class="btn-primary" style="padding: 0.75rem 1.25rem;">Ask Assistant</button>
+      </div>
+
+      <div class="terminal-window" style="margin-top: 1.25rem;">
+        <div class="terminal-header">
+          <div class="term-dot green"></div>
+          <div class="term-title">pinecone-assistant ~ vector-forge-assistant (Status: Ready)</div>
+        </div>
+        <div class="term-body" id="assistantOutput" style="color: #f8fafc; font-family: system-ui; font-size: 0.92rem; line-height: 1.6;"></div>
       </div>
     </section>
 

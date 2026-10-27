@@ -265,6 +265,47 @@ def hyde(
     console.print()
 
 
+@app.command()
+def assistant(
+    question: str = typer.Argument(..., help="Technical inquiry to ask Pinecone Assistant"),
+    upload: Optional[str] = typer.Option(None, "--upload", "-u", help="Optional file path to index into assistant first")
+):
+    """Chat directly with managed Pinecone Assistant with verified document citations."""
+    from ..patterns.pinecone_assistant import PineconeAssistantManager
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]🤖 Pinecone Assistant - Autonomous Question-Answering[/bold cyan]\n"
+        "[dim]Agentic RAG with file parsing & citation verification[/dim]",
+        border_style="cyan"
+    ))
+
+    mgr = PineconeAssistantManager()
+
+    if upload:
+        console.print(f"[yellow]Uploading '{upload}' to Pinecone Assistant...[/yellow]")
+        up_res = mgr.upload_file(upload)
+        console.print(f"[green]✔ File status: {up_res.get('status')}[/green]\n")
+
+    console.print(f"[dim]Asking:[/dim] [bold white]'{question}'[/bold white]...\n")
+    resp = mgr.chat(question)
+
+    console.print(Panel(
+        resp.answer,
+        title=f"[bold green]Assistant Answer ({'Live Pinecone Cloud' if resp.is_live_assistant else 'Local Fallback'})[/bold green]",
+        border_style="green"
+    ))
+
+    if resp.citations:
+        cit_table = Table(title="Document References & Grounded Citations", show_header=True, header_style="bold cyan")
+        cit_table.add_column("Source File", style="bold")
+        cit_table.add_column("Reference Details", style="dim")
+        for c in resp.citations:
+            cit_table.add_row(str(c.get("file", "File")), str(c))
+        console.print(cit_table)
+    console.print()
+
+
 def main():
     app()
 

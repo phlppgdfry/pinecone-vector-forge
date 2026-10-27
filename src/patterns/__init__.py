@@ -10,6 +10,7 @@ from .evaluation import RetrievalEvaluator, GOLDEN_DATASET
 from .self_query import SelfQueryDeconstructor, DeconstructedQuery
 from .hyde import HyDESearchEngine
 from .similarity_matrix import SimilarityMatrixAnalyzer, SimilarityMatrixReport
+from .pinecone_assistant import PineconeAssistantManager, AssistantChatResponse
 
 __all__ = [
     "HybridSearchEngine",
@@ -26,4 +27,6 @@ __all__ = [
     "HyDESearchEngine",
     "SimilarityMatrixAnalyzer",
     "SimilarityMatrixReport",
+    "PineconeAssistantManager",
+    "AssistantChatResponse",
 ]
