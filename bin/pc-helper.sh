@@ -35,12 +35,12 @@ case "$ACTION" in
     "create")
         INDEX_NAME=${2:-"vector-forge-knowledge"}
         echo -e "${GREEN}Provisioning Serverless Index: ${INDEX_NAME} (AWS / us-east-1)...${NC}"
-        pc index create --name "$INDEX_NAME" --dimension 1536 --metric cosine --spec-cloud aws --spec-region us-east-1
+        pc index create --name "$INDEX_NAME" --dimension 1536 --metric cosine --cloud aws --region us-east-1
         ;;
     "describe")
         INDEX_NAME=${2:-"vector-forge-knowledge"}
         echo -e "${GREEN}Describing index: ${INDEX_NAME}...${NC}"
-        pc index describe --name "$INDEX_NAME"
+        pc index describe --index-name "$INDEX_NAME"
         ;;
     *)
         echo "Usage: $0 {login|status|indexes|create [index-name]|describe [index-name]}"

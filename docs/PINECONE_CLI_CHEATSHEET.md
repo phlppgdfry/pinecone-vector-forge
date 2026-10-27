@@ -55,13 +55,13 @@ pc index create \
   --name vector-forge-knowledge \
   --dimension 1536 \
   --metric cosine \
-  --spec-cloud aws \
-  --spec-region us-east-1
+  --cloud aws \
+  --region us-east-1
 ```
 
 ### Inspect Index Telemetry & Endpoints
 ```bash
-pc index describe --name vector-forge-knowledge
+pc index describe --index-name vector-forge-knowledge
 ```
 
 ### Delete an Index

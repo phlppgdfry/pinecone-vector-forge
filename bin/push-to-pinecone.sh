@@ -43,8 +43,8 @@ if ! pc index list | grep -q "$INDEX_NAME"; then
       --name "$INDEX_NAME" \
       --dimension 1536 \
       --metric cosine \
-      --spec-cloud aws \
-      --spec-region us-east-1
+      --cloud aws \
+      --region us-east-1
     echo "Index created. Waiting 5 seconds for cloud DNS propagation..."
     sleep 5
 else

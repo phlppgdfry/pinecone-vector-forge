@@ -48,14 +48,28 @@ class Settings(BaseSettings):
 # Global settings instance
 settings = Settings()
 
-# Check for CLI stored token if env var is empty
+# Check for CLI stored token/key if env var is empty or placeholder
 if not settings.is_pinecone_configured():
-    # Pinecone CLI stores credentials in ~/.pinecone or ~/.config/pinecone
-    cli_token_path = Path.home() / ".pinecone" / "token"
-    if cli_token_path.exists():
+    # 1. Check ~/.config/pinecone/secrets.yaml
+    secrets_yaml_path = Path.home() / ".config" / "pinecone" / "secrets.yaml"
+    if secrets_yaml_path.exists():
         try:
-            token = cli_token_path.read_text().strip()
-            if token:
-                settings.pinecone_api_key = token
+            for line in secrets_yaml_path.read_text().splitlines():
+                if line.startswith("api_key:"):
+                    val = line.split("api_key:", 1)[1].strip().strip('"').strip("'")
+                    if val and val.startswith("pcsk_"):
+                        settings.pinecone_api_key = val
+                        break
         except Exception:
             pass
+
+    # 2. Check ~/.pinecone/token
+    if not settings.is_pinecone_configured():
+        cli_token_path = Path.home() / ".pinecone" / "token"
+        if cli_token_path.exists():
+            try:
+                token = cli_token_path.read_text().strip()
+                if token:
+                    settings.pinecone_api_key = token
+            except Exception:
+                pass

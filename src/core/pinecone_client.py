@@ -92,7 +92,8 @@ class PineconeManager:
                             "values": rec.values,
                             "metadata": rec.metadata
                         }
-                        if rec.sparse_values:
+                        # Pinecone only allows sparse_values on indexes using dotproduct
+                        if rec.sparse_values and settings.pinecone_metric == "dotproduct":
                             item["sparse_values"] = rec.sparse_values
                         vectors_payload.append(item)
 
@@ -143,23 +144,41 @@ class PineconeManager:
                 }
                 if filter_dict:
                     query_kwargs["filter"] = filter_dict
-                if sparse_vector and sparse_vector.get("indices"):
+                if sparse_vector and sparse_vector.get("indices") and settings.pinecone_metric == "dotproduct":
                     query_kwargs["sparse_vector"] = sparse_vector
 
-                res = self.index.query(**query_kwargs)
+                try:
+                    res = self.index.query(**query_kwargs)
+                except Exception as query_err:
+                    if "does not support sparse values" in str(query_err):
+                        query_kwargs.pop("sparse_vector", None)
+                        res = self.index.query(**query_kwargs)
+                    else:
+                        raise query_err
                 latency_ms = (time.perf_counter() - start_time) * 1000
 
+                matches = getattr(res, "matches", None)
+                if matches is None and isinstance(res, dict):
+                    matches = res.get("matches", [])
+                elif matches is None:
+                    matches = []
+
                 hits = []
-                for match in res.get("matches", []):
-                    meta = match.get("metadata", {})
+                for match in matches:
+                    m_id = getattr(match, "id", None) if not isinstance(match, dict) else match.get("id")
+                    m_score = getattr(match, "score", 0.0) if not isinstance(match, dict) else match.get("score", 0.0)
+                    meta = getattr(match, "metadata", {}) if not isinstance(match, dict) else match.get("metadata", {})
+                    if meta is None:
+                        meta = {}
+
                     hits.append(
                         SearchHit(
-                            id=match["id"],
-                            score=float(match.get("score", 0.0)),
-                            text=meta.get("text", ""),
-                            title=meta.get("parent_title", meta.get("title", "Untitled")),
-                            category=meta.get("category", "general"),
-                            tags=meta.get("tags", []),
+                            id=str(m_id),
+                            score=float(m_score or 0.0),
+                            text=str(meta.get("text", "")),
+                            title=str(meta.get("parent_title", meta.get("title", "Untitled"))),
+                            category=str(meta.get("category", "general")),
+                            tags=list(meta.get("tags", [])),
                             document_id=meta.get("document_id"),
                             metadata=meta
                         )
