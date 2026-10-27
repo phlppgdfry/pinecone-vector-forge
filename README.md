@@ -91,13 +91,25 @@ make install
 ```bash
 make test
 ```
-*All 15 unit, pattern, API, and benchmark tests run out-of-the-box in under 1 second.*
+*All 27 unit, pattern, API, and benchmark tests run out-of-the-box in under 2 seconds.*
 
 ### 3. Launch the Interactive Web Dashboard
 ```bash
 make ui
 ```
 Open **[http://localhost:8000](http://localhost:8000)** in your browser.
+
+### 4. Interactive Terminal Assistant REPL
+```bash
+make chat
+# or: vectorforge chat
+```
+
+### 5. Production Docker Deployment
+```bash
+make docker-build
+make docker-up
+```
 
 ### 4. Connect Your Real Pinecone Account & Push to Cloud
 Vector Forge auto-detects your Pinecone credentials in three simple ways:
@@ -316,22 +328,28 @@ Why top AI Engineering teams migrate from legacy cluster/pod-based vector stores
 pinecone-vector-forge/
 ├── .github/workflows/
 │   ├── ci.yml                 # Pytest, type checks & benchmark suite
+│   ├── deploy-pages.yml       # Interactive GitHub Pages showcase deployment
 │   └── pinecone-sync.yml      # Automated index health audit
 ├── bin/
 │   ├── pc-helper.sh           # Smart Pinecone CLI wrapper
+│   ├── push-to-pinecone.sh    # Production cloud synchronizer
 │   └── demo-run.sh            # 60-second automated demo tour
-├── docs/
+├── docs/                      # Interactive showcase & technical specs
+│   ├── index.html             # 3D Vector Universe & Live Assistant Showcase
+│   ├── showcase.js            # 3D Canvas visualizer, Assistant RAG & Heatmap logic
 │   ├── ARCHITECTURE.md        # Deep dive into Serverless, Hybrid search & RAG
 │   ├── PINECONE_CLI_CHEATSHEET.md # Exhaustive official CLI command reference
 │   └── BENCHMARKS.md          # Latency & throughput telemetry
 ├── src/
 │   ├── core/                  # Configuration, models, embeddings, Pinecone client
-│   ├── patterns/              # Hybrid search, Multi-tenancy, Metadata filters, Reranker
-│   ├── cli/                   # Rich TUI CLI (vectorforge)
+│   ├── patterns/              # Hybrid search, Assistant, HyDE, Self-Query, Reranker, Heatmap
+│   ├── cli/                   # Rich TUI CLI (vectorforge) & Assistant REPL
 │   ├── web/                   # FastAPI backend + Glassmorphism frontend
 │   └── seed/                  # Curated AI Engineering knowledge dataset & batch upsert
-├── tests/                     # 15+ automated unit, pattern, and benchmark tests
-├── Makefile                   # Developer commands (make test, make ui, make seed)
+├── tests/                     # 27 automated unit, pattern, and benchmark tests
+├── Dockerfile                 # Multi-stage unprivileged production container
+├── docker-compose.yml         # Container stack with healthcheck
+├── Makefile                   # Developer commands (make test, make ui, make chat)
 ├── pyproject.toml             # Modern PEP 621 Python packaging
 ├── requirements.txt           # Project dependencies
 ├── LICENSE                    # MIT License

@@ -1,9 +1,10 @@
 """Pattern 7: Quantitative Retrieval Evaluation & Benchmarking Engine.
 
-Measures Mean Reciprocal Rank (MRR@K), Recall@K, Precision@K, and Latency
+Measures Mean Reciprocal Rank (MRR@K), Recall@K, Precision@K, NDCG@K, and Latency
 against benchmark gold standards.
 """
 
+import math
 from typing import List, Dict, Any, Tuple
 from dataclasses import dataclass
 from .hybrid_search import HybridSearchEngine
@@ -14,6 +15,7 @@ class EvalBenchmarkResult:
     mrr_at_k: float
     recall_at_k: float
     precision_at_k: float
+    ndcg_at_k: float
     avg_latency_ms: float
     total_eval_queries: int
 
@@ -38,12 +40,13 @@ class RetrievalEvaluator:
         self.engine = HybridSearchEngine()
 
     def run_benchmark(self, alpha: float = 0.70, namespace: str = "default") -> EvalBenchmarkResult:
-        """Executes golden queries and computes MRR, Recall, and Precision."""
+        """Executes golden queries and computes MRR, Recall, Precision, and NDCG."""
         import time
 
         reciprocal_ranks = []
         recalls = []
         precisions = []
+        ndcgs = []
         latencies = []
 
         for query, expected_ids in GOLDEN_DATASET:
@@ -71,15 +74,28 @@ class RetrievalEvaluator:
             precision = true_positives / len(hits) if hits else 0.0
             precisions.append(precision)
 
+            # 4. Normalized Discounted Cumulative Gain (NDCG@K)
+            dcg = 0.0
+            for i, doc_id in enumerate(retrieved_doc_ids[:self.top_k], 1):
+                rel = 1.0 if doc_id in expected_ids else 0.0
+                dcg += (math.pow(2.0, rel) - 1.0) / math.log2(i + 1)
+
+            ideal_hits = min(self.top_k, len(expected_ids))
+            idcg = sum((math.pow(2.0, 1.0) - 1.0) / math.log2(i + 1) for i in range(1, ideal_hits + 1))
+            ndcg = (dcg / idcg) if idcg > 0 else 0.0
+            ndcgs.append(ndcg)
+
         avg_mrr = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
         avg_recall = sum(recalls) / len(recalls) if recalls else 0.0
         avg_precision = sum(precisions) / len(precisions) if precisions else 0.0
+        avg_ndcg = sum(ndcgs) / len(ndcgs) if ndcgs else 0.0
         avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
 
         return EvalBenchmarkResult(
             mrr_at_k=round(avg_mrr, 4),
             recall_at_k=round(avg_recall, 4),
             precision_at_k=round(avg_precision, 4),
+            ndcg_at_k=round(avg_ndcg, 4),
             avg_latency_ms=round(avg_latency, 2),
             total_eval_queries=len(GOLDEN_DATASET)
         )

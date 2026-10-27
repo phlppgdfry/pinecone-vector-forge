@@ -306,6 +306,75 @@ def assistant(
     console.print()
 
 
+@app.command(name="chat")
+def interactive_chat():
+    """Start an interactive conversational REPL with Pinecone Assistant."""
+    from rich.prompt import Prompt
+    from ..patterns.pinecone_assistant import PineconeAssistantManager
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]💬 Pinecone Vector Forge - Interactive Assistant REPL[/bold cyan]\n"
+        "[dim]Direct terminal session with grounded citations & autonomous RAG\n"
+        "Commands: [green]/files[/green] (list knowledge), [yellow]/upload <path>[/yellow] (index doc), [red]/exit[/red] (quit)[/dim]",
+        border_style="cyan"
+    ))
+
+    mgr = PineconeAssistantManager()
+    info = mgr.get_or_create_assistant()
+    status_label = "🟢 Live Pinecone Cloud" if info.get("status") == "Ready" and mgr.client.is_connected else "🟡 Local Fallback Mode"
+    console.print(f"[bold]Session Status:[/bold] {status_label} | [bold]Assistant:[/bold] [cyan]{mgr.assistant_name}[/cyan]\n")
+
+    files = mgr.list_files()
+    if files:
+        console.print(f"[dim]Indexed knowledge base files: {', '.join(f.get('name', 'file') for f in files)}[/dim]\n")
+
+    while True:
+        try:
+            user_input = Prompt.ask("[bold green]vectorforge >[/bold green]")
+            if not user_input.strip():
+                continue
+
+            cmd = user_input.strip()
+            if cmd.lower() in ("/exit", "exit", "quit", ":q"):
+                console.print("[dim]Closing interactive session. Happy searching![/dim]\n")
+                break
+            elif cmd.lower() == "/files":
+                current_files = mgr.list_files()
+                console.print(f"[cyan]Files in assistant:[/cyan] {current_files}\n")
+                continue
+            elif cmd.lower().startswith("/upload "):
+                filepath = cmd.split(" ", 1)[1].strip()
+                console.print(f"[yellow]Uploading '{filepath}' to assistant...[/yellow]")
+                res = mgr.upload_file(filepath)
+                console.print(f"[green]✔ Upload result: {res.get('status')}[/green]\n")
+                continue
+            elif cmd.lower() == "/clear":
+                console.clear()
+                continue
+
+            console.print("[dim]Thinking...[/dim]")
+            resp = mgr.chat(cmd)
+
+            console.print(Panel(
+                resp.answer,
+                title=f"[bold green]Assistant Answer ({'Live Pinecone Cloud' if resp.is_live_assistant else 'Local Fallback'})[/bold green]",
+                border_style="green"
+            ))
+
+            if resp.citations:
+                cit_table = Table(show_header=True, header_style="bold cyan")
+                cit_table.add_column("Cited Source File", style="bold")
+                cit_table.add_column("Citation Reference", style="dim")
+                for c in resp.citations:
+                    cit_table.add_row(str(c.get("file", "File")), str(c.get("text", c)))
+                console.print(cit_table)
+            console.print()
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n[dim]Interrupted. Goodbye![/dim]\n")
+            break
+
+
 def main():
     app()
 

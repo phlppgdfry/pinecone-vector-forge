@@ -13,11 +13,12 @@ from ..core.embeddings import get_embedding_generator
 
 
 class HierarchicalChunker:
-    """Chunks documents with sliding semantic window and parent-linkage."""
+    """Chunks documents with sliding semantic window, parent-linkage, and contextual prefixing."""
 
-    def __init__(self, chunk_size: int = 400, overlap: int = 80):
+    def __init__(self, chunk_size: int = 400, overlap: int = 80, enable_contextual_prefix: bool = True):
         self.chunk_size = chunk_size
         self.overlap = overlap
+        self.enable_contextual_prefix = enable_contextual_prefix
         self.embedder = get_embedding_generator()
 
     def chunk_document(self, doc: Document) -> List[Chunk]:
@@ -83,12 +84,21 @@ class HierarchicalChunker:
         return chunks
 
     def process_and_vectorize(self, doc: Document) -> List[VectorRecord]:
-        """Splits document into chunks and computes dense & sparse vectors."""
+        """Splits document into chunks and computes dense & sparse vectors with contextual prefixing."""
         chunks = self.chunk_document(doc)
         records: List[VectorRecord] = []
 
-        texts = [c.text for c in chunks]
-        dense_embeddings = self.embedder.embed_batch(texts)
+        # Contextual Retrieval (Anthropic pattern): Prepend document metadata context
+        # to each chunk string when computing embeddings to resolve pronoun ambiguity and lost topic context
+        if self.enable_contextual_prefix:
+            texts_to_embed = [
+                f"Document: {chunk.parent_title} | Category: {chunk.category} | Tags: {', '.join(chunk.tags)}\n{chunk.text}"
+                for chunk in chunks
+            ]
+        else:
+            texts_to_embed = [c.text for c in chunks]
+
+        dense_embeddings = self.embedder.embed_batch(texts_to_embed)
 
         for chunk, dense_vec in zip(chunks, dense_embeddings):
             sparse_vec = self.embedder.generate_sparse_vector(chunk.text)

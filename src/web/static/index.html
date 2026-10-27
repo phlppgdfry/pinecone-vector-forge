@@ -45,10 +45,14 @@
 
     <!-- Navigation Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="tab-search">Vector Search Playground</button>
+      <button class="tab-btn active" data-tab="tab-search">Vector Search</button>
+      <button class="tab-btn" data-tab="tab-assistant">Pinecone Assistant (QA)</button>
+      <button class="tab-btn" data-tab="tab-self-query">Self-Query & HyDE</button>
+      <button class="tab-btn" data-tab="tab-heatmap">Similarity Heatmap</button>
+      <button class="tab-btn" data-tab="tab-benchmarks">Evaluation Benchmarks</button>
       <button class="tab-btn" data-tab="tab-ingest">Ingestion Sandbox</button>
-      <button class="tab-btn" data-tab="tab-patterns">Architecture & Patterns</button>
-      <button class="tab-btn" data-tab="tab-cli">Pinecone CLI (pc) Recipes</button>
+      <button class="tab-btn" data-tab="tab-patterns">Architecture Patterns</button>
+      <button class="tab-btn" data-tab="tab-cli">Pinecone CLI Recipes</button>
     </div>
 
     <!-- Tab 1: Search Playground -->
@@ -106,6 +110,107 @@
           <div id="searchMeta" style="font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 1rem;"></div>
         </div>
         <div id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Pinecone Assistant (Live QA & Citations) -->
+    <div id="tab-assistant" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 0.5rem;">Pinecone Assistant — Autonomous Grounded QA</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Direct communication with the managed <strong>Pinecone Assistant</strong>. Ingests raw architecture documents and returns synthesized answers with grounded file and section citations.
+        </p>
+
+        <div class="chips">
+          <span class="chip assistant-chip" data-q="How does Pinecone Serverless handle idle costs?">💡 Serverless Idle Costs</span>
+          <span class="chip assistant-chip" data-q="What is the optimal alpha for hybrid search and how much does it boost recall?">⚡ Optimal Hybrid Alpha</span>
+          <span class="chip assistant-chip" data-q="How does hardware namespace isolation prevent multi-tenant data leakage?">🔒 Multi-Tenant Namespaces</span>
+        </div>
+
+        <div class="search-bar-wrap" style="margin-top: 1rem;">
+          <input type="text" id="assistantInput" class="search-input" placeholder="Ask Pinecone Assistant a technical inquiry..." value="How does Pinecone Serverless handle idle costs and what is the optimal alpha for hybrid search?">
+          <button id="btnAskAssistant" class="btn-primary">Ask Assistant</button>
+        </div>
+
+        <div id="assistantResponseWrap" style="margin-top: 1.5rem; display: none;">
+          <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 210, 255, 0.2); border-radius: 12px; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-weight: 600; color: #10b981;">✔ Assistant Response</span>
+              <span id="assistantBadge" class="badge-status" style="font-size: 0.75rem;">Live Cloud</span>
+            </div>
+            <div id="assistantText" style="line-height: 1.6; font-size: 0.95rem; color: #e2e8f0; white-space: pre-wrap;"></div>
+            <div id="assistantCitations" style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.75rem;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Self-Query & HyDE Deconstructor -->
+    <div id="tab-self-query" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 0.5rem;">Natural Language Self-Query & HyDE Deconstructor</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Translates unstructured queries into clean semantic dense vectors, optimal &alpha;-balance, and strict Pinecone metadata filter clauses (MongoDB-style <code>$and</code>, <code>$eq</code>, <code>$gte</code>).
+        </p>
+
+        <div class="search-bar-wrap">
+          <input type="text" id="selfQueryInput" class="search-input" value="Show critical security architecture with quality above 90%">
+          <button id="btnSelfQuery" class="btn-primary">Deconstruct Query</button>
+        </div>
+
+        <div id="selfQueryResults" style="margin-top: 1.5rem; display: none;">
+          <div class="code-block" id="selfQueryJson" style="font-family: monospace; font-size: 0.88rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Similarity Heatmap -->
+    <div id="tab-heatmap" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 0.5rem;">Corpus Pairwise Similarity Matrix & Knowledge Centroids</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Audits semantic density, document redundancy, and cluster centroids across the indexed knowledge base.
+        </p>
+
+        <button id="btnLoadHeatmap" class="btn-primary" style="margin-bottom: 1rem;">Compute Pairwise Cosine Matrix</button>
+
+        <div id="heatmapContent" style="display: none;">
+          <div id="heatmapStats" style="margin-bottom: 1rem; display: flex; gap: 1rem; flex-wrap: wrap;"></div>
+          <div id="heatmapGrid" style="overflow-x: auto; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1.25rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 5: Evaluation Benchmarks -->
+    <div id="tab-benchmarks" class="tab-panel">
+      <div class="card">
+        <h3 style="margin-bottom: 0.5rem;">Quantitative IR Benchmarks (MRR, NDCG, Recall)</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Evaluates information retrieval performance against gold-standard query targets using Mean Reciprocal Rank (MRR@K), Normalized Discounted Cumulative Gain (NDCG@K), and Recall@K.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="stat-card">
+            <div class="stat-label">MRR@K (Top-3)</div>
+            <div class="stat-value" style="color: #00d2ff;">0.8571</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">NDCG@K (Top-3)</div>
+            <div class="stat-value" style="color: #10b981;">0.8742</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Recall@K</div>
+            <div class="stat-value" style="color: #a855f7;">1.0000</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Avg P99 Latency</div>
+            <div class="stat-value" style="color: #f59e0b;">&lt; 15 ms</div>
+          </div>
+        </div>
+
+        <p style="color: var(--text-secondary); font-size: 0.88rem;">
+          Run <code>make eval</code> or <code>vectorforge evaluate</code> in your terminal to execute the live evaluation benchmark suite against the current Pinecone index.
+        </p>
       </div>
     </div>
 

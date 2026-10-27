@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchTelemetry();
   bindSearchForm();
   bindIngestForm();
+  bindAssistant();
+  bindSelfQuery();
+  bindHeatmap();
 
   // Trigger initial search
   performSearch("Serverless scaling and idle costs", 0.7);
@@ -213,6 +216,145 @@ function bindIngestForm() {
     } finally {
       btn.disabled = false;
       btn.textContent = "Vectorize & Upsert to Pinecone";
+    }
+  });
+}
+
+function bindAssistant() {
+  const btn = document.getElementById("btnAskAssistant");
+  const input = document.getElementById("assistantInput");
+  const wrap = document.getElementById("assistantResponseWrap");
+  const textEl = document.getElementById("assistantText");
+  const citationsEl = document.getElementById("assistantCitations");
+  const badgeEl = document.getElementById("assistantBadge");
+
+  // Chips
+  document.querySelectorAll(".assistant-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      input.value = chip.dataset.q;
+      btn.click();
+    });
+  });
+
+  btn.addEventListener("click", async () => {
+    const q = input.value.trim();
+    if (!q) return;
+
+    btn.disabled = true;
+    btn.textContent = "Generating Answer...";
+    wrap.style.display = "block";
+    textEl.textContent = "Thinking and retrieving grounded citations from Pinecone...";
+    citationsEl.innerHTML = "";
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+
+      textEl.textContent = data.answer;
+      badgeEl.textContent = data.is_live_assistant ? "🟢 Live Pinecone Cloud" : "🟡 Local Simulated Fallback";
+
+      if (data.citations && data.citations.length > 0) {
+        let citHtml = `<div style="font-weight: 600; font-size: 0.82rem; color: #00d2ff; margin-bottom: 0.4rem;">Grounded Document Citations:</div>`;
+        data.citations.forEach(c => {
+          citHtml += `<div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.2rem;">📄 <strong>${c.file || 'Document'}</strong>: <em>"${(c.text || c).slice(0, 140)}..."</em></div>`;
+        });
+        citationsEl.innerHTML = citHtml;
+      }
+    } catch (err) {
+      textEl.textContent = `Error asking assistant: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Ask Assistant";
+    }
+  });
+}
+
+function bindSelfQuery() {
+  const btn = document.getElementById("btnSelfQuery");
+  const input = document.getElementById("selfQueryInput");
+  const resWrap = document.getElementById("selfQueryResults");
+  const jsonEl = document.getElementById("selfQueryJson");
+
+  btn.addEventListener("click", async () => {
+    const q = input.value.trim();
+    if (!q) return;
+
+    btn.disabled = true;
+    btn.textContent = "Deconstructing...";
+    resWrap.style.display = "block";
+    jsonEl.textContent = "Parsing natural language query plan...";
+
+    try {
+      const res = await fetch("/api/query-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      jsonEl.innerHTML = `<pre style="color: #38bdf8; margin: 0;">${JSON.stringify(data, null, 2)}</pre>`;
+    } catch (err) {
+      jsonEl.textContent = `Deconstruction failed: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Deconstruct Query";
+    }
+  });
+}
+
+function bindHeatmap() {
+  const btn = document.getElementById("btnLoadHeatmap");
+  const content = document.getElementById("heatmapContent");
+  const statsEl = document.getElementById("heatmapStats");
+  const gridEl = document.getElementById("heatmapGrid");
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = "Computing Cosine Similarities...";
+
+    try {
+      const res = await fetch("/api/heatmap");
+      const data = await res.json();
+
+      content.style.display = "block";
+      statsEl.innerHTML = `
+        <div style="background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; border-radius: 8px;">
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Average Similarity:</span>
+          <strong style="color: #00d2ff; margin-left: 0.4rem;">${data.average_similarity}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 0.6rem 1rem; border-radius: 8px;">
+          <span style="color: var(--text-muted); font-size: 0.8rem;">Top Centroid:</span>
+          <strong style="color: #10b981; margin-left: 0.4rem;">${data.centroids[0] || 'N/A'}</strong>
+        </div>
+      `;
+
+      let tableHtml = `<table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">`;
+      tableHtml += `<thead><tr><th style="padding: 6px; text-align: left; color: #94a3b8;">Document</th>`;
+      data.doc_titles.forEach((t, i) => {
+        tableHtml += `<th style="padding: 6px; color: #38bdf8;">D${i+1}</th>`;
+      });
+      tableHtml += `</tr></thead><tbody>`;
+
+      data.matrix.forEach((row, i) => {
+        const titleShort = data.doc_titles[i].length > 25 ? data.doc_titles[i].slice(0, 25) + "…" : data.doc_titles[i];
+        tableHtml += `<tr><td style="padding: 6px; text-align: left; font-weight: 500; color: #e2e8f0;">D${i+1}: ${titleShort}</td>`;
+        row.forEach((val) => {
+          const intensity = Math.round(val * 255);
+          const bg = val > 0.95 ? 'rgba(0, 210, 255, 0.45)' : (val > 0.6 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(15, 23, 42, 0.6)');
+          tableHtml += `<td style="padding: 6px; background: ${bg}; border: 1px solid rgba(255,255,255,0.05); font-family: monospace;">${val.toFixed(2)}</td>`;
+        });
+        tableHtml += `</tr>`;
+      });
+      tableHtml += `</tbody></table>`;
+      gridEl.innerHTML = tableHtml;
+    } catch (err) {
+      gridEl.innerHTML = `<div style="color: #ef4444;">Heatmap calculation failed: ${err.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Refresh Similarity Matrix";
     }
   });
 }

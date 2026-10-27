@@ -123,6 +123,68 @@ class PineconeManager:
             "note": "Vectors stored in memory. Provide valid PINECONE_API_KEY to sync with cloud."
         }
 
+    def delete_vectors(
+        self,
+        ids: Optional[List[str]] = None,
+        filter_dict: Optional[Dict[str, Any]] = None,
+        delete_all: bool = False,
+        namespace: str = "default"
+    ) -> Dict[str, Any]:
+        """Delete vectors by ID list, metadata filter, or wipe namespace."""
+        start_time = time.perf_counter()
+        deleted_count = 0
+
+        # Update local memory store
+        if namespace in self._local_store:
+            if delete_all:
+                deleted_count = len(self._local_store[namespace])
+                self._local_store[namespace] = {}
+            elif ids:
+                for target_id in ids:
+                    if target_id in self._local_store[namespace]:
+                        del self._local_store[namespace][target_id]
+                        deleted_count += 1
+            elif filter_dict:
+                to_delete = [
+                    rec_id for rec_id, rec in self._local_store[namespace].items()
+                    if self._matches_filter(rec.get("metadata", {}), filter_dict)
+                ]
+                for rec_id in to_delete:
+                    del self._local_store[namespace][rec_id]
+                    deleted_count += 1
+
+        # Execute live Pinecone cloud deletion if connected
+        if self.is_connected and self.index:
+            try:
+                delete_kwargs: Dict[str, Any] = {"namespace": namespace}
+                if delete_all:
+                    delete_kwargs["delete_all"] = True
+                elif ids:
+                    delete_kwargs["ids"] = ids
+                elif filter_dict:
+                    delete_kwargs["filter"] = filter_dict
+
+                self.index.delete(**delete_kwargs)
+                latency_ms = (time.perf_counter() - start_time) * 1000
+                return {
+                    "status": "success",
+                    "deleted_count": deleted_count or "operation_dispatched",
+                    "namespace": namespace,
+                    "connected_to_pinecone": True,
+                    "latency_ms": round(latency_ms, 2)
+                }
+            except Exception as e:
+                self.connection_error = str(e)
+
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        return {
+            "status": "success (local store)",
+            "deleted_count": deleted_count,
+            "namespace": namespace,
+            "connected_to_pinecone": False,
+            "latency_ms": round(latency_ms, 2)
+        }
+
     def query_vectors(
         self,
         vector: List[float],

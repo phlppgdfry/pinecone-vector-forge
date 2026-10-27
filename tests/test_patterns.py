@@ -19,17 +19,23 @@ def test_metadata_filter_builder():
 
 
 def test_hierarchical_chunker():
-    chunker = HierarchicalChunker(chunk_size=50, overlap=10)
+    chunker = HierarchicalChunker(chunk_size=50, overlap=10, enable_contextual_prefix=True)
     doc = Document(
         id="doc_test_1",
         title="Scaling Vector Indexes",
         category="engineering",
+        tags=["pinecone", "scaling"],
         content=" ".join(["word" for _ in range(120)])
     )
     chunks = chunker.chunk_document(doc)
     assert len(chunks) > 1
     assert chunks[0].document_id == "doc_test_1"
     assert chunks[0].parent_title == "Scaling Vector Indexes"
+
+    records = chunker.process_and_vectorize(doc)
+    assert len(records) == len(chunks)
+    assert len(records[0].values) == 1536
+    assert records[0].metadata["parent_title"] == "Scaling Vector Indexes"
 
 
 def test_two_stage_reranker():
@@ -75,6 +81,8 @@ def test_retrieval_evaluator_benchmark():
     assert results.total_eval_queries == 7
     assert results.mrr_at_k > 0.0
     assert results.recall_at_k > 0.0
+    assert results.precision_at_k > 0.0
+    assert results.ndcg_at_k > 0.0
 
 
 def test_self_query_deconstructor():
@@ -114,3 +122,23 @@ def test_pinecone_assistant_manager():
     assert info["name"] == "vector-forge-assistant"
     files = mgr.list_files()
     assert isinstance(files, list)
+
+
+def test_vector_lifecycle_and_deletion():
+    from src.core.pinecone_client import get_pinecone_manager
+    from src.core.models import VectorRecord
+    mgr = get_pinecone_manager()
+
+    rec = VectorRecord(
+        id="test_del_123",
+        values=[0.1] * 1536,
+        metadata={"category": "temporary_test"}
+    )
+    upsert_res = mgr.upsert_vectors([rec], namespace="test_cleanup_ns")
+    assert upsert_res["upserted_count"] == 1
+
+    del_res = mgr.delete_vectors(ids=["test_del_123"], namespace="test_cleanup_ns")
+    assert del_res["status"].startswith("success")
+
+    wipe_res = mgr.delete_vectors(delete_all=True, namespace="test_cleanup_ns")
+    assert wipe_res["status"].startswith("success")
