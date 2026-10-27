@@ -75,3 +75,32 @@ def test_retrieval_evaluator_benchmark():
     assert results.total_eval_queries == 7
     assert results.mrr_at_k > 0.0
     assert results.recall_at_k > 0.0
+
+
+def test_self_query_deconstructor():
+    from src.patterns.self_query import SelfQueryDeconstructor
+    parser = SelfQueryDeconstructor()
+    plan = parser.deconstruct("Show critical security architecture with quality above 90%")
+    assert plan.detected_priority == "critical"
+    assert plan.detected_min_quality == 0.9
+    assert plan.filter_dict is not None
+    assert "$and" in plan.filter_dict or "quality_score" in plan.filter_dict
+
+
+def test_hyde_engine():
+    from src.patterns.hyde import HyDESearchEngine
+    engine = HyDESearchEngine()
+    passage = engine.generate_hypothetical_passage("How does serverless scaling handle idle costs?")
+    assert len(passage) > 50
+    assert "serverless" in passage.lower()
+
+
+def test_similarity_matrix_analyzer():
+    from src.patterns.similarity_matrix import SimilarityMatrixAnalyzer
+    analyzer = SimilarityMatrixAnalyzer()
+    report = analyzer.compute_matrix()
+    assert len(report.matrix) == 7
+    assert len(report.matrix[0]) == 7
+    # Diagonal should be 1.0 (self-similarity)
+    assert abs(report.matrix[0][0] - 1.0) < 1e-3
+    assert len(report.cluster_centroids) > 0

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pinecone Vector Forge — Production Hybrid Search & RAG Architecture</title>
+  <title>Pinecone Vector Forge — Production Hybrid Search & 3D Vector Intelligence</title>
   <link rel="stylesheet" href="showcase.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌲</text></svg>">
 </head>
@@ -16,7 +16,9 @@
         <span>Pinecone Vector Forge</span>
       </a>
       <div class="nav-links">
-        <a href="#demo" class="nav-link">Interactive Demo</a>
+        <a href="#demo" class="nav-link">3D Vector Universe</a>
+        <a href="#self-query" class="nav-link">Self-Query</a>
+        <a href="#heatmap" class="nav-link">Heatmap</a>
         <a href="#cli" class="nav-link">Pinecone CLI (pc)</a>
         <a href="#architecture" class="nav-link">Architecture</a>
         <a href="https://github.com/phlppgdfry/pinecone-vector-forge" target="_blank" class="btn-github">
@@ -31,14 +33,14 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-pill">
-        <span>⚡ Production Vector Intelligence Engine</span>
+        <span>⚡ Production Vector Intelligence Engine • Powered by Pinecone Serverless</span>
       </div>
-      <h1>Enterprise <span>Vector Search</span> & RAG Architecture</h1>
+      <h1>Enterprise <span>Vector Search</span> & 3D Intelligence</h1>
       <p class="hero-sub">
-        Staff-level reference implementation powered by <strong>Pinecone Serverless</strong>. Featuring convex Sparse-Dense Hybrid Search, multi-tenant hardware namespace isolation, hierarchical parent-document chunking, and native <strong>Pinecone CLI (<code>pc</code>)</strong> GitOps tooling.
+        Staff-level reference architecture with convex Sparse-Dense Hybrid Search, multi-tenant hardware namespace isolation, <strong>Pinecone Inference Cross-Encoder Reranking</strong> (<code>bge-reranker-v2-m3</code>), Natural Language Self-Querying, and native <strong>Pinecone CLI (<code>pc</code>)</strong> GitOps tooling.
       </p>
       <div class="hero-cta">
-        <a href="#demo" class="btn-primary">Try Live In-Browser Demo</a>
+        <a href="#demo" class="btn-primary">Explore 3D Vector Universe</a>
         <a href="https://github.com/phlppgdfry/pinecone-vector-forge#readme" target="_blank" class="btn-secondary">Explore Architecture Docs</a>
       </div>
     </section>
@@ -58,24 +60,24 @@
         <div class="metric-label">Serverless ANN Retrieval Latency</div>
       </div>
       <div class="metric-card">
-        <div class="metric-num">1536</div>
-        <div class="metric-label">Vector Dimensionality (Cosine)</div>
+        <div class="metric-num">bge-v2</div>
+        <div class="metric-label">Managed Pinecone Cross-Encoder</div>
       </div>
     </div>
 
-    <!-- Interactive Playground Section -->
+    <!-- 3D Vector Universe Section -->
     <section id="demo" class="glass-panel">
       <div class="section-header" style="text-align: left; margin-bottom: 1.5rem;">
         <div class="section-tag">Interactive Simulation</div>
-        <h2 class="section-title">2D Vector Embedding Visualizer & Hybrid Search</h2>
+        <h2 class="section-title">3D Vector Universe & Hybrid Search Engine</h2>
       </div>
 
       <div class="interactive-grid">
-        <!-- Canvas Visualizer -->
+        <!-- 3D Canvas Visualizer -->
         <div class="canvas-wrap">
           <div class="canvas-toolbar">
-            <span>2D PCA Projection of 1536-d Vector Space</span>
-            <span>Live Query Raycasting</span>
+            <span>🖱️ Click & Drag to Rotate 3D Space • Scroll to Zoom</span>
+            <span>Dynamic Cosine Raycasting</span>
           </div>
           <canvas id="vectorCanvas"></canvas>
         </div>
@@ -88,7 +90,7 @@
           </div>
 
           <div class="chips">
-            <span class="chip" data-query="Serverless scaling and idle cost">💡 Serverless Idle Scaling</span>
+            <span class="chip" data-query="Serverless scaling and idle cost">💡 Serverless Idle Cost</span>
             <span class="chip" data-query="Zero-leakage multi-tenancy">🔒 Multi-Tenancy</span>
             <span class="chip" data-query="Sparse-dense hybrid search with BM25">⚡ Hybrid BM25</span>
             <span class="chip" data-query="RAG contextual chunking">📑 Hierarchical Chunks</span>
@@ -104,6 +106,41 @@
 
           <div class="results-list" id="demoResultsList"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- Natural Language Self-Query Deconstructor -->
+    <section id="self-query" class="glass-panel">
+      <div class="section-header" style="text-align: left; margin-bottom: 1rem;">
+        <div class="section-tag">Smart Query Planning</div>
+        <h2 class="section-title">Natural Language Self-Query Deconstructor</h2>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1.25rem;">
+        Translates free-form user prompts into semantic vector queries and validated Pinecone metadata filters automatically:
+      </p>
+
+      <div class="search-box">
+        <input type="text" id="selfQueryInput" class="search-input" value="Show critical security architecture with quality above 90%">
+        <button id="btnSelfQuery" class="btn-primary" style="padding: 0.75rem 1.25rem;">Deconstruct</button>
+      </div>
+
+      <div class="code-block" id="selfQueryOutput" style="min-height: 140px; margin-top: 1rem;"></div>
+    </section>
+
+    <!-- Pairwise Similarity Heatmap -->
+    <section id="heatmap" class="glass-panel">
+      <div class="section-header" style="text-align: left; margin-bottom: 1rem;">
+        <div class="section-tag">Vector Geometry</div>
+        <h2 class="section-title">Pairwise Vector Similarity Heatmap</h2>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.95rem; margin-bottom: 1.25rem;">
+        Audits semantic redundancy and document proximity across the knowledge corpus. Darker blue indicates orthogonal topics, while glowing cyan highlights conceptual clusters.
+      </p>
+
+      <div id="heatmapGrid" style="margin-bottom: 1rem;"></div>
+      <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; justify-content: space-between;">
+        <span>0.00 (Orthogonal / Distinct)</span>
+        <span>1.00 (Identical Vector)</span>
       </div>
     </section>
 
@@ -139,31 +176,52 @@
     <!-- Architecture Patterns Overview -->
     <section id="architecture" style="margin-bottom: 4rem;">
       <div class="section-header">
-        <div class="section-tag">Core Capabilities</div>
-        <h2 class="section-title">Engineered for Production Scale</h2>
+        <div class="section-tag">Architecture Matrix</div>
+        <h2 class="section-title">Why Pinecone Serverless Leads the Market</h2>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-        <div class="metric-card" style="text-align: left;">
-          <h3 style="color: #00d2ff; margin-bottom: 0.5rem;">Convex Hybrid Retrieval</h3>
-          <p style="color: var(--text-dim); font-size: 0.9rem;">
-            Blends neural dense embeddings (semantic intuition) with BM25 sparse frequencies (exact codes/SKUs) to eliminate blind spots in enterprise search.
-          </p>
-        </div>
-
-        <div class="metric-card" style="text-align: left;">
-          <h3 style="color: #a855f7; margin-bottom: 0.5rem;">Tenant Namespace Fencing</h3>
-          <p style="color: var(--text-dim); font-size: 0.9rem;">
-            Native hardware-level query partitioning guarantees that tenant queries never scan or leak data across client boundaries.
-          </p>
-        </div>
-
-        <div class="metric-card" style="text-align: left;">
-          <h3 style="color: #10b981; margin-bottom: 0.5rem;">Hallucination Guardrails</h3>
-          <p style="color: var(--text-dim); font-size: 0.9rem;">
-            Evaluates retrieval confidence thresholds and embeds verifiable bracketed citations <code>[1]</code>, <code>[2]</code> directly into generated responses.
-          </p>
-        </div>
+      <div style="overflow-x: auto; margin-bottom: 2rem;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; background: var(--bg-card); border-radius: 12px; overflow: hidden;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-glass); background: rgba(255,255,255,0.03);">
+              <th style="padding: 1rem;">Vector Database</th>
+              <th style="padding: 1rem;">Architecture</th>
+              <th style="padding: 1rem;">Storage / Compute</th>
+              <th style="padding: 1rem;">Idle Cost</th>
+              <th style="padding: 1rem;">Managed Inference</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border-glass); color: #00d2ff; font-weight: 600;">
+              <td style="padding: 1rem;">🌲 Pinecone Serverless</td>
+              <td style="padding: 1rem;">Cloud-Native Distributed</td>
+              <td style="padding: 1rem;">Decoupled (S3 + SIMD)</td>
+              <td style="padding: 1rem;">$0.00 (Pure Pay-Per-Query)</td>
+              <td style="padding: 1rem;">Native (bge, e5, cohere)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-glass); color: var(--text-dim);">
+              <td style="padding: 1rem;">Qdrant Cloud</td>
+              <td style="padding: 1rem;">Node-based / Cluster</td>
+              <td style="padding: 1rem;">Coupled Disk/RAM</td>
+              <td style="padding: 1rem;">Hourly Cluster Node Fee</td>
+              <td style="padding: 1rem;">Self-hosted / External</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-glass); color: var(--text-dim);">
+              <td style="padding: 1rem;">Weaviate Cloud</td>
+              <td style="padding: 1rem;">Cluster-based / Pods</td>
+              <td style="padding: 1rem;">Coupled Pod RAM</td>
+              <td style="padding: 1rem;">Dedicated Pod Pricing</td>
+              <td style="padding: 1rem;">Module Integrations</td>
+            </tr>
+            <tr style="color: var(--text-dim);">
+              <td style="padding: 1rem;">pgvector (Postgres)</td>
+              <td style="padding: 1rem;">Relational Extension</td>
+              <td style="padding: 1rem;">Coupled Relational DB</td>
+              <td style="padding: 1rem;">High DB Instance Costs</td>
+              <td style="padding: 1rem;">None (Manual Pipeline)</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
 

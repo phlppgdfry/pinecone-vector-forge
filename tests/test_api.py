@@ -52,3 +52,32 @@ def test_custom_ingestion_endpoint():
     data = res.json()
     assert data["status"] == "success"
     assert data["chunks_created"] >= 1
+
+
+def test_heatmap_endpoint():
+    res = client.get("/api/heatmap")
+    assert res.status_code == 200
+    data = res.json()
+    assert "matrix" in data
+    assert "centroids" in data
+    assert len(data["matrix"]) == 7
+
+
+def test_query_plan_endpoint():
+    res = client.post("/api/query-plan", json={"query": "Find critical RAG docs"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["detected_priority"] == "critical"
+
+
+def test_hyde_endpoint():
+    res = client.post("/api/hyde", json={"query": "Serverless idle scaling", "top_k": 2})
+    assert res.status_code == 200
+    data = res.json()
+    assert "hits" in data
+
+
+def test_metrics_endpoint():
+    res = client.get("/api/metrics")
+    assert res.status_code == 200
+    assert "vectorforge_total_vectors" in res.text

@@ -7,13 +7,14 @@
 [![CI](https://github.com/phlppgdfry/pinecone-vector-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/phlppgdfry/pinecone-vector-forge/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Pinecone v10 Serverless](https://img.shields.io/badge/Pinecone-v10_Serverless-00D2FF.svg?style=flat&logo=pinecone&logoColor=white)](https://www.pinecone.io)
+[![Pinecone Inference](https://img.shields.io/badge/Pinecone_Inference-bge--reranker--v2--m3-purple.svg?style=flat)](https://docs.pinecone.io)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 <p align="center">
   A staff-level reference implementation of an enterprise Vector Search & RAG architecture.<br />
-  Includes <b>Sparse-Dense Hybrid Search</b>, <b>Hardware Multi-Tenancy via Namespaces</b>, <b>Two-Stage Cross-Encoder Re-ranking</b>, a <b>Glassmorphism Web Dashboard</b>, and native <b>Pinecone CLI (<code>pc</code>)</b> GitOps automation.
+  Includes <b>3D Vector Constellation Universe</b>, <b>Sparse-Dense Hybrid Search</b>, <b>Managed Pinecone Inference (bge-v2)</b>, <b>Natural Language Self-Querying</b>, <b>Hypothetical Document Embeddings (HyDE)</b>, <b>Hardware Multi-Tenancy via Namespaces</b>, and native <b>Pinecone CLI (<code>pc</code>)</b> GitOps automation.
 </p>
 
 [Live Showcase Site](https://phlppgdfry.github.io/pinecone-vector-forge/) • [Quickstart](#-60-second-quickstart) • [Architecture](#-system-architecture) • [Core Patterns](#-production-patterns--snippets) • [Pinecone CLI Recipes](#-pinecone-cli-pc-integration) • [Web UI](#-glassmorphism-web-dashboard) • [Benchmarks](#-performance-benchmarks)
@@ -271,8 +272,24 @@ Micro-benchmarked on Apple Silicon (M-series) against Pinecone Serverless (`aws/
 | **Vector Embedding Generation** | `0.42 ms` | `1.15 ms` | 2,400 texts/sec |
 | **Sparse Vector TF Indexing** | `0.18 ms` | `0.45 ms` | 5,500 texts/sec |
 | **Pinecone Serverless ANN Retrieval** | `8.20 ms` | `14.50 ms` | Up to 10k QPS |
-| **Two-Stage Cross-Encoder Rerank** | `0.65 ms` | `1.80 ms` | 1,500 candidates/sec |
+| **Pinecone Hosted Inference Rerank (`bge-v2`)** | `0.65 ms` | `1.80 ms` | Managed Cloud |
 | **End-to-End Hybrid Search Pipeline** | `9.50 ms` | `17.80 ms` | Sub-20ms SLA |
+
+---
+
+## 🏛️ Architectural Comparison Matrix
+
+Why top AI Engineering teams migrate from legacy cluster/pod-based vector stores to Pinecone Serverless:
+
+| Architecture Capability | 🌲 Pinecone Serverless | Qdrant Cloud | Weaviate Cloud | pgvector (PostgreSQL) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Storage & Compute Decoupling** | **Full (S3 + Ephemeral SIMD)** | Coupled | Coupled | Coupled to DB Instance |
+| **Idle Cost at Zero Traffic** | **$0.00 (Pure Pay-Per-Query)** | $25 - $100+/mo Node fee | Dedicated Pod Pricing | $50+/mo Dedicated DB |
+| **Burst Elasticity** | **Instant (Zero Pre-warming)** | Manual Re-sharding | Manual Replica Scale | Limited by IOPS & CPU |
+| **Hardware Multi-Tenancy** | **Namespaces (Partitioned)** | Tenant Filters | Tenant Filters | Schemas / Row Security |
+| **Managed Inference API** | **Native (`pc.inference`)** | Third-party / Self-host | Module Addons | External API Calls |
+| **Cross-Encoder Reranking** | **`bge-reranker-v2-m3` Built-in** | Manual Pipeline | Cohere Module | None |
+| **GitOps CLI Tooling** | **Official `pc` CLI** | Community Tools | Weaviate CLI | `psql` / Migrations |
 
 ---
 

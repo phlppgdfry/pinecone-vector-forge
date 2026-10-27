@@ -1,5 +1,5 @@
 /**
- * Pinecone Vector Forge - Interactive GitHub Showcase Client
+ * Pinecone Vector Forge - 3D Vector Universe & Interactive Showcase Client
  */
 
 const SEED_DOCUMENTS = [
@@ -8,7 +8,7 @@ const SEED_DOCUMENTS = [
     title: "Pinecone Serverless Architecture",
     category: "Architecture",
     color: "#00d2ff",
-    x: 180, y: 130,
+    x: -120, y: -60, z: 80,
     tags: ["serverless", "scaling", "aws"],
     text: "Decouples compute from storage via columnar blob indexing and stateless SIMD workers. Zero idle cost and automatic burst elasticity."
   },
@@ -17,7 +17,7 @@ const SEED_DOCUMENTS = [
     title: "Sparse-Dense Hybrid Search & RRF",
     category: "Retrieval",
     color: "#a855f7",
-    x: 320, y: 110,
+    x: 100, y: -80, z: 40,
     tags: ["hybrid", "bm25", "rrf"],
     text: "Blends dense semantic embeddings with BM25 sparse vectors via alpha weighting, boosting domain recall by 25-40%."
   },
@@ -26,7 +26,7 @@ const SEED_DOCUMENTS = [
     title: "RAG Contextual Chunking Defense",
     category: "RAG",
     color: "#10b981",
-    x: 290, y: 260,
+    x: 60, y: 90, z: -60,
     tags: ["rag", "chunking", "hallucination"],
     text: "Partitions documents into focused 350-token semantic chunks while retaining parent context pointers for prompt hydration."
   },
@@ -35,7 +35,7 @@ const SEED_DOCUMENTS = [
     title: "Zero-Leakage Multi-Tenancy",
     category: "Security",
     color: "#f59e0b",
-    x: 110, y: 270,
+    x: -90, y: 100, z: -30,
     tags: ["security", "multi_tenancy", "namespaces"],
     text: "Enforces hardware-level namespace partitioning ensuring customer data isolation without dedicated index costs."
   },
@@ -44,7 +44,7 @@ const SEED_DOCUMENTS = [
     title: "Two-Stage Retrieval & Reranker",
     category: "Retrieval",
     color: "#ec4899",
-    x: 420, y: 180,
+    x: 140, y: 30, z: 110,
     tags: ["rerank", "cross_encoder", "precision"],
     text: "Fetches Top-20 candidates using ANN vector similarity, followed by cross-attention token reranking to discard false positives."
   },
@@ -53,7 +53,7 @@ const SEED_DOCUMENTS = [
     title: "Pinecone CLI (pc) Automation",
     category: "DevOps",
     color: "#38bdf8",
-    x: 220, y: 310,
+    x: -40, y: 140, z: 50,
     tags: ["cli", "devops", "automation"],
     text: "Automates vector index provisioning, snapshot backups, and CI/CD audit runs with official Pinecone CLI tooling."
   },
@@ -62,24 +62,33 @@ const SEED_DOCUMENTS = [
     title: "Vector Metrics: Cosine vs Dot Product",
     category: "Architecture",
     color: "#6366f1",
-    x: 140, y: 70,
+    x: -140, y: -40, z: -90,
     tags: ["metrics", "cosine", "math"],
     text: "Explores dimensionality and normalization. L2-normalized vectors allow high-speed dot product equivalence to cosine."
   }
 ];
 
-let queryNode = { x: 250, y: 200, active: true };
+// 3D rotation state
+let rotX = 0.2;
+let rotY = 0.4;
+let zoom = 1.0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let queryNode = { x: 0, y: 0, z: 0, active: true };
 let activeHits = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-  initCanvas();
+  init3DCanvas();
   initSlider();
   initChips();
   initTerminal();
+  initQueryPlanDemo();
+  initHeatmap();
   executeSearch("Serverless scaling and idle cost");
 });
 
-function initCanvas() {
+function init3DCanvas() {
   const canvas = document.getElementById("vectorCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -87,75 +96,137 @@ function initCanvas() {
   function resize() {
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight - 35;
-    draw();
   }
   window.addEventListener("resize", resize);
   resize();
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Mouse interaction for 3D rotation
+  canvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
 
-    // Draw grid
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += 40) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  window.addEventListener("mouseup", () => { isDragging = false; });
+
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    rotY += dx * 0.008;
+    rotX += dy * 0.008;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  });
+
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoom = Math.max(0.5, Math.min(2.5, zoom - e.deltaY * 0.0015));
+  });
+
+  // Render loop with subtle auto-rotation
+  function render() {
+    if (!isDragging) {
+      rotY += 0.003;
     }
-    for (let y = 0; y < canvas.height; y += 40) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const fov = 400 * zoom;
+
+    function project(x, y, z) {
+      // Rotate Y
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const x1 = x * cosY - z * sinY;
+      const z1 = z * cosY + x * sinY;
+
+      // Rotate X
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const y2 = y * cosX - z1 * sinX;
+      const z2 = z1 * cosX + y * sinX;
+
+      const scale = fov / (fov + z2 + 300);
+      return {
+        x2d: cx + x1 * scale,
+        y2d: cy + y2 * scale,
+        scale: scale,
+        depth: z2
+      };
     }
+
+    // Project query node
+    const qProj = project(queryNode.x, queryNode.y, queryNode.z);
+
+    // Project docs
+    const projectedDocs = SEED_DOCUMENTS.map(doc => ({
+      ...doc,
+      proj: project(doc.x, doc.y, doc.z)
+    }));
+
+    // Sort by depth for correct 3D overlap
+    projectedDocs.sort((a, b) => b.proj.depth - a.proj.depth);
 
     // Draw connection lines to top matches
-    if (queryNode.active && activeHits.length > 0) {
+    if (activeHits.length > 0) {
       activeHits.slice(0, 3).forEach((hit, idx) => {
-        const doc = SEED_DOCUMENTS.find(d => d.id === hit.id);
-        if (doc) {
+        const doc = projectedDocs.find(d => d.id === hit.id);
+        if (doc && doc.proj.scale > 0 && qProj.scale > 0) {
           ctx.beginPath();
-          ctx.moveTo(queryNode.x, queryNode.y);
-          ctx.lineTo(doc.x, doc.y);
-          ctx.strokeStyle = `rgba(0, 210, 255, ${0.8 - idx * 0.25})`;
-          ctx.lineWidth = 2.5 - idx * 0.6;
-          ctx.setLineDash([4, 4]);
+          ctx.moveTo(qProj.x2d, qProj.y2d);
+          ctx.lineTo(doc.proj.x2d, doc.proj.y2d);
+          ctx.strokeStyle = `rgba(0, 210, 255, ${Math.max(0.15, (0.8 - idx * 0.25) * doc.proj.scale)})`;
+          ctx.lineWidth = Math.max(1, (3 - idx * 0.7) * doc.proj.scale);
+          ctx.setLineDash([5, 5]);
           ctx.stroke();
           ctx.setLineDash([]);
         }
       });
     }
 
-    // Draw document vector points
-    SEED_DOCUMENTS.forEach(doc => {
-      // Glow circle
+    // Draw nodes
+    projectedDocs.forEach(doc => {
+      const p = doc.proj;
+      if (p.scale <= 0) return;
+
+      const radius = Math.max(3, 8 * p.scale);
+
       ctx.beginPath();
-      ctx.arc(doc.x, doc.y, 8, 0, Math.PI * 2);
+      ctx.arc(p.x2d, p.y2d, radius, 0, Math.PI * 2);
       ctx.fillStyle = doc.color;
       ctx.shadowColor = doc.color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 15 * p.scale;
       ctx.fill();
       ctx.shadowBlur = 0;
 
       // Label
-      ctx.fillStyle = "#cbd5e1";
-      ctx.font = "11px system-ui";
-      ctx.fillText(doc.title, doc.x + 12, doc.y + 4);
+      if (p.scale > 0.6) {
+        ctx.fillStyle = `rgba(203, 213, 225, ${Math.min(1, p.scale)})`;
+        ctx.font = `${Math.round(11 * p.scale)}px system-ui`;
+        ctx.fillText(doc.title, p.x2d + radius + 4, p.y2d + 4);
+      }
     });
 
-    // Draw query vector point
-    if (queryNode.active) {
+    // Draw Query Node
+    if (queryNode.active && qProj.scale > 0) {
+      const qRadius = Math.max(4, 9 * qProj.scale);
       ctx.beginPath();
-      ctx.arc(queryNode.x, queryNode.y, 9, 0, Math.PI * 2);
+      ctx.arc(qProj.x2d, qProj.y2d, qRadius, 0, Math.PI * 2);
       ctx.fillStyle = "#ffffff";
       ctx.shadowColor = "#00d2ff";
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 20;
       ctx.fill();
       ctx.shadowBlur = 0;
 
       ctx.fillStyle = "#00d2ff";
-      ctx.font = "bold 11px system-ui";
-      ctx.fillText("Query Vector", queryNode.x + 14, queryNode.y + 4);
+      ctx.font = `bold ${Math.round(11 * qProj.scale)}px system-ui`;
+      ctx.fillText("Query Node", qProj.x2d + qRadius + 4, qProj.y2d + 4);
     }
+
+    requestAnimationFrame(render);
   }
 
-  window.redrawVectorCanvas = draw;
+  render();
 }
 
 function initSlider() {
@@ -193,26 +264,22 @@ function executeSearch(query) {
   const alpha = parseFloat(document.getElementById("demoAlphaSlider")?.value || 0.7);
   const qTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
-  // Compute simulated similarity score
   const scored = SEED_DOCUMENTS.map(doc => {
     const allDocWords = (doc.title + " " + doc.text + " " + doc.tags.join(" ")).toLowerCase();
     
-    // Keyword match (sparse)
     let keywordHits = 0;
     qTerms.forEach(t => {
       if (allDocWords.includes(t)) keywordHits += 1;
     });
     const sparseScore = qTerms.length ? (keywordHits / qTerms.length) : 0.1;
 
-    // Simulated semantic cosine
     let hashScore = 0;
     for (let i = 0; i < query.length; i++) {
       hashScore += (query.charCodeAt(i) * 31 + (doc.title.charCodeAt(0) || 0)) % 100;
     }
     let denseScore = 0.4 + (hashScore % 50) / 100.0;
-    if (keywordHits > 0) denseScore += 0.25;
+    if (keywordHits > 0) denseScore += 0.30;
 
-    // Convex combination
     const combined = (alpha * denseScore) + ((1 - alpha) * sparseScore);
     return {
       id: doc.id,
@@ -226,17 +293,16 @@ function executeSearch(query) {
   scored.sort((a, b) => b.score - a.score);
   activeHits = scored;
 
-  // Move query point closer to top match
   if (scored.length > 0) {
     const topDoc = SEED_DOCUMENTS.find(d => d.id === scored[0].id);
     if (topDoc) {
-      queryNode.x = topDoc.x + (Math.random() * 30 - 15);
-      queryNode.y = topDoc.y + 40;
+      queryNode.x = topDoc.x * 0.7;
+      queryNode.y = topDoc.y * 0.7;
+      queryNode.z = topDoc.z * 0.7;
     }
   }
 
   renderResults(scored);
-  if (window.redrawVectorCanvas) window.redrawVectorCanvas();
 }
 
 function renderResults(hits) {
@@ -252,6 +318,71 @@ function renderResults(hits) {
       <div class="result-snippet">${hit.text}</div>
     </div>
   `).join("");
+}
+
+function initQueryPlanDemo() {
+  const input = document.getElementById("selfQueryInput");
+  const output = document.getElementById("selfQueryOutput");
+  const btn = document.getElementById("btnSelfQuery");
+  if (!input || !output) return;
+
+  function runParse() {
+    const q = input.value;
+    const lower = q.toLowerCase();
+
+    let cat = null;
+    if (lower.includes("security") || lower.includes("multi-tenant")) cat = "security_compliance";
+    else if (lower.includes("architecture") || lower.includes("serverless")) cat = "vector_architecture";
+    else if (lower.includes("rag") || lower.includes("chunking")) cat = "rag_patterns";
+    else if (lower.includes("hybrid") || lower.includes("rerank")) cat = "retrieval_engineering";
+
+    let priority = null;
+    if (lower.includes("critical")) priority = "critical";
+    else if (lower.includes("high")) priority = "high";
+
+    const filterObj = {};
+    const conditions = [];
+    if (cat) conditions.push({ category: { "$eq": cat } });
+    if (priority) conditions.push({ priority: { "$eq": priority } });
+    if (lower.includes("quality")) conditions.push({ quality_score: { "$gte": 0.90 } });
+
+    if (conditions.length === 1) Object.assign(filterObj, conditions[0]);
+    else if (conditions.length > 1) filterObj["$and"] = conditions;
+
+    output.textContent = JSON.stringify({
+      semantic_intent: q.replace(/(critical|high|priority|quality\s*>=\s*0\.\d+)/gi, "").trim(),
+      pinecone_filter: Object.keys(filterObj).length > 0 ? filterObj : null,
+      optimal_alpha: 0.75,
+      inference_rerank_model: "bge-reranker-v2-m3"
+    }, null, 2);
+  }
+
+  if (btn) btn.addEventListener("click", runParse);
+  input.addEventListener("input", runParse);
+  runParse();
+}
+
+function initHeatmap() {
+  const container = document.getElementById("heatmapGrid");
+  if (!container) return;
+
+  const n = SEED_DOCUMENTS.length;
+  let html = `<div style="display: grid; grid-template-columns: repeat(${n}, 1fr); gap: 4px;">`;
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      let sim = (i === j) ? 1.0 : (Math.sin(i * 3 + j * 7) * 0.3 + 0.5);
+      sim = Math.round(sim * 100) / 100;
+      const opacity = Math.max(0.15, sim);
+      html += `
+        <div style="background: rgba(0, 210, 255, ${opacity}); height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: monospace; color: ${sim > 0.6 ? '#000' : '#fff'}; cursor: pointer;" title="${SEED_DOCUMENTS[i].title} ↔ ${SEED_DOCUMENTS[j].title}: ${sim}">
+          ${sim.toFixed(2)}
+        </div>
+      `;
+    }
+  }
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 function initTerminal() {
@@ -271,20 +402,18 @@ Target Project: 'default-production' (aws/us-east-1)
 Session token cached in ~/.pinecone/token`,
 
     "pc index list": `NAME                     DIMENSION   METRIC   SPEC_CLOUD   SPEC_REGION   STATUS
-vector-forge-knowledge   1536        cosine   aws          us-east-1     Ready
-customer-support-kb      1536        cosine   aws          us-east-1     Ready`,
+vector-forge-knowledge   1536        cosine   aws          us-east-1     Ready`,
 
     "pc index describe": `Index: vector-forge-knowledge
 Dimension: 1536
 Metric: cosine
-Host: vector-forge-knowledge-c49b1a.svc.us-east-1.pinecone.io
+Host: vector-forge-knowledge-tsjaqvu.svc.aped-4627-b74a.pinecone.io
 Cloud: aws
 Region: us-east-1
 Status: Ready (Serverless)
 Total Vectors: 7
 Namespaces:
-  - default: 7 records
-  - tenant_acme: 0 records`,
+  - default: 7 records`,
 
     "pc index record search": `Querying index 'vector-forge-knowledge' (Top-K=3, namespace=default)...
 
@@ -301,6 +430,5 @@ RANK  ID                        SCORE     TITLE
     });
   });
 
-  // Initial command
   termBody.textContent = `$ pc index describe --name vector-forge-knowledge\n\n${COMMANDS["pc index describe"]}`;
 }

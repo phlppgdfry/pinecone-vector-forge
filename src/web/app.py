@@ -16,6 +16,9 @@ from ..patterns.hybrid_search import HybridSearchEngine
 from ..patterns.metadata_filtering import MetadataFilterBuilder
 from ..patterns.reranking import TwoStageReranker
 from ..patterns.contextual_chunking import HierarchicalChunker
+from ..patterns.self_query import SelfQueryDeconstructor
+from ..patterns.hyde import HyDESearchEngine
+from ..patterns.similarity_matrix import SimilarityMatrixAnalyzer
 from ..seed.ingest import run_ingestion_pipeline
 from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
 
@@ -158,6 +161,76 @@ async def trigger_seed(namespace: str = "default"):
     """Reseed knowledge base."""
     res = run_ingestion_pipeline(namespace=namespace)
     return res
+
+
+@app.get("/api/heatmap")
+async def get_similarity_heatmap():
+    """Retrieve pairwise cosine similarity matrix across corpus."""
+    analyzer = SimilarityMatrixAnalyzer()
+    report = analyzer.compute_matrix()
+    return {
+        "titles": report.document_titles,
+        "ids": report.document_ids,
+        "matrix": report.matrix,
+        "average_similarity": report.average_corpus_similarity,
+        "most_similar_pair": report.most_similar_pair,
+        "most_distinct_pair": report.most_distinct_pair,
+        "centroids": report.cluster_centroids
+    }
+
+
+class QueryPlanRequest(BaseModel):
+    query: str
+
+
+@app.post("/api/query-plan")
+async def generate_query_plan(req: QueryPlanRequest):
+    """Deconstruct natural language request into vector text and Pinecone metadata filter."""
+    parser = SelfQueryDeconstructor()
+    plan = parser.deconstruct(req.query)
+    return {
+        "raw_query": plan.raw_query,
+        "semantic_query": plan.semantic_query,
+        "filter_dict": plan.filter_dict,
+        "suggested_alpha": plan.suggested_alpha,
+        "detected_category": plan.detected_category,
+        "detected_priority": plan.detected_priority,
+        "detected_quality": plan.detected_min_quality
+    }
+
+
+@app.post("/api/hyde")
+async def execute_hyde_search(req: SearchRequest):
+    """Executes search using Hypothetical Document Embeddings."""
+    engine = HyDESearchEngine()
+    hits = engine.search(query=req.query, top_k=req.top_k, namespace=req.namespace)
+    return {
+        "query": req.query,
+        "hits": hits,
+        "total_hits": len(hits),
+        "mode": "HyDE (Hypothetical Document Expansion)"
+    }
+
+
+@app.get("/api/metrics")
+async def get_metrics():
+    """Expose Prometheus/OpenTelemetry style vector engine metrics."""
+    pc = get_pinecone_manager()
+    telem = pc.get_telemetry()
+    lines = [
+        "# HELP vectorforge_total_vectors Total number of indexed vectors",
+        "# TYPE vectorforge_total_vectors gauge",
+        f"vectorforge_total_vectors {telem.total_vector_count}",
+        "# HELP vectorforge_dimension Dimensionality of the active index",
+        "# TYPE vectorforge_dimension gauge",
+        f"vectorforge_dimension {telem.dimension}",
+        "# HELP vectorforge_connected Connection health to Pinecone cloud (1=connected, 0=offline)",
+        "# TYPE vectorforge_connected gauge",
+        f"vectorforge_connected {1 if telem.connected_to_pinecone else 0}",
+    ]
+    for ns, count in telem.namespaces.items():
+        lines.append(f'vectorforge_namespace_vectors{{namespace="{ns}"}} {count}')
+    return HTMLResponse("\n".join(lines), media_type="text/plain; version=0.0.4")
 
 
 def run():

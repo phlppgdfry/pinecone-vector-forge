@@ -179,6 +179,92 @@ def demo():
     console.print("[bold green]✔ Showcase tour completed successfully![/bold green]\n")
 
 
+@app.command()
+def query_plan(
+    query: str = typer.Argument(..., help="Natural language inquiry with implied filters")
+):
+    """Deconstruct natural language query into semantic vector + Pinecone metadata filter."""
+    from ..patterns.self_query import SelfQueryDeconstructor
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]🧠 Pinecone Vector Forge - Self-Query Deconstructor[/bold cyan]\n"
+        "[dim]Translating free text to structured Pinecone filter payloads[/dim]",
+        border_style="cyan"
+    ))
+
+    parser = SelfQueryDeconstructor()
+    plan = parser.deconstruct(query)
+
+    table = Table(title="Deconstructed Query Plan", show_header=True, header_style="bold green")
+    table.add_column("Component", style="bold")
+    table.add_column("Parsed Value", style="cyan")
+
+    table.add_row("Raw User Query", plan.raw_query)
+    table.add_row("Semantic Dense String", plan.semantic_query)
+    table.add_row("Extracted Category", plan.detected_category or "None (Global Search)")
+    table.add_row("Extracted Priority", plan.detected_priority or "None")
+    table.add_row("Min Quality Threshold", f"{plan.detected_min_quality}" if plan.detected_min_quality else "None")
+    table.add_row("Optimal Alpha Balance", f"{plan.suggested_alpha:.2f} ({int(plan.suggested_alpha*100)}% Dense)")
+    table.add_row("Compiled Pinecone Filter", str(plan.filter_dict) if plan.filter_dict else "None (Unfiltered)")
+
+    console.print(table)
+    console.print()
+
+
+@app.command()
+def heatmap():
+    """Analyze vector corpus similarity matrix, redundancy, and cluster centroids."""
+    from ..patterns.similarity_matrix import SimilarityMatrixAnalyzer
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]🔥 Pinecone Vector Forge - Corpus Similarity & Redundancy Matrix[/bold cyan]\n"
+        "[dim]Auditing pairwise cosine distances & knowledge centroids[/dim]",
+        border_style="cyan"
+    ))
+
+    analyzer = SimilarityMatrixAnalyzer()
+    report = analyzer.compute_matrix()
+
+    info_table = Table(show_header=True, header_style="bold magenta")
+    info_table.add_column("Corpus Metric", style="bold")
+    info_table.add_column("Value", style="cyan")
+
+    info_table.add_row("Average Pairwise Similarity", f"{report.average_corpus_similarity:.4f}")
+    info_table.add_row("Most Similar Pair", f"{report.most_similar_pair[0]} ↔ {report.most_similar_pair[1]} (Score: {report.most_similar_pair[2]})")
+    info_table.add_row("Most Distinct Pair", f"{report.most_distinct_pair[0]} ↔ {report.most_distinct_pair[1]} (Score: {report.most_distinct_pair[2]})")
+    info_table.add_row("Top Knowledge Centroids", ", ".join(report.cluster_centroids[:2]))
+
+    console.print(info_table)
+    console.print()
+
+
+@app.command()
+def hyde(
+    query: str = typer.Argument(..., help="Query to expand with Hypothetical Document Embedding"),
+    top_k: int = typer.Option(3, "--top-k", "-k", help="Results count")
+):
+    """Execute search with Hypothetical Document Embeddings (HyDE)."""
+    from ..patterns.hyde import HyDESearchEngine
+
+    console.print(f"\n[dim]Executing HyDE search for:[/dim] [bold cyan]'{query}'[/bold cyan]\n")
+    engine = HyDESearchEngine()
+    hits = engine.search(query=query, top_k=top_k)
+
+    table = Table(title=f"HyDE Results ({len(hits)} hits)", show_header=True, header_style="bold green")
+    table.add_column("Rank", justify="center", style="dim", width=6)
+    table.add_column("Score", justify="right", style="bold yellow", width=10)
+    table.add_column("Title", style="bold white", width=30)
+    table.add_column("Category", style="cyan")
+
+    for i, h in enumerate(hits, 1):
+        table.add_row(f"#{i}", f"{h.score:.4f}", h.title, h.category)
+
+    console.print(table)
+    console.print()
+
+
 def main():
     app()
 

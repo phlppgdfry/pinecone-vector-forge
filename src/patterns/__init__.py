@@ -7,6 +7,9 @@ from .contextual_chunking import HierarchicalChunker
 from .reranking import TwoStageReranker
 from .rag_agent import GroundedRAGAgent, GroundedResponse
 from .evaluation import RetrievalEvaluator, GOLDEN_DATASET
+from .self_query import SelfQueryDeconstructor, DeconstructedQuery
+from .hyde import HyDESearchEngine
+from .similarity_matrix import SimilarityMatrixAnalyzer, SimilarityMatrixReport
 
 __all__ = [
     "HybridSearchEngine",
@@ -18,4 +21,9 @@ __all__ = [
     "GroundedResponse",
     "RetrievalEvaluator",
     "GOLDEN_DATASET",
+    "SelfQueryDeconstructor",
+    "DeconstructedQuery",
+    "HyDESearchEngine",
+    "SimilarityMatrixAnalyzer",
+    "SimilarityMatrixReport",
 ]
