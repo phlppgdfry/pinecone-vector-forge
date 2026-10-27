@@ -142,3 +142,48 @@ def test_vector_lifecycle_and_deletion():
 
     wipe_res = mgr.delete_vectors(delete_all=True, namespace="test_cleanup_ns")
     assert wipe_res["status"].startswith("success")
+
+
+def test_tenant_authorization_boundary():
+    import pytest
+    from src.patterns.multi_tenancy import MultiTenantManager, TenantAuthorizationError
+    mgr = MultiTenantManager()
+
+    # Legitimate access
+    mgr.authorize_tenant_access(caller_tenant_id="tenant_alpha", requested_tenant_id="tenant_alpha")
+
+    # Unauthorized access must raise TenantAuthorizationError
+    with pytest.raises(TenantAuthorizationError):
+        mgr.authorize_tenant_access(caller_tenant_id="tenant_intruder", requested_tenant_id="tenant_alpha")
+
+    # Admin override works
+    mgr.authorize_tenant_access(caller_tenant_id="admin_service", requested_tenant_id="tenant_alpha", is_admin=True)
+
+
+def test_finops_cost_accounting():
+    from src.core.finops import FinOpsCostModel
+    est = FinOpsCostModel.estimate_search_cost(top_k=5, rerank=True, candidates_count=10)
+    assert est.estimated_rcu == 1
+    assert est.estimated_cost_usd > 0.0
+    assert "rcu_cost_usd" in est.cost_breakdown
+    assert "rerank_cost_usd" in est.cost_breakdown
+
+
+def test_rag_entity_grounding_and_abstention():
+    from src.patterns.rag_agent import GroundedRAGAgent
+    agent = GroundedRAGAgent(confidence_threshold=0.25)
+
+    # Completely out-of-domain inquiry should trigger abstention
+    res = agent.answer_query("Recipe for sourdough bread with 70% hydration")
+    assert res.passed_guardrail is False
+    assert "abstain" in res.synthesized_answer.lower()
+    assert res.grounding_status in ("abstained_low_confidence", "abstained_out_of_domain")
+
+
+def test_full_corpus_retrieval_benchmark():
+    from src.patterns.evaluation import RetrievalEvaluator
+    evaluator = RetrievalEvaluator(top_k=3)
+    res = evaluator.run_benchmark(alpha=0.70, enable_rerank=False, use_full_corpus=True)
+    assert res.total_eval_queries == 25
+    assert res.abstention_accuracy > 0.50
+    assert res.mrr_at_k > 0.0

@@ -1,7 +1,7 @@
 # Pinecone Vector Forge - Developer Automation
 .PHONY: help install test seed status ui demo pc-login pc-status pc-indexes lint clean docker-build docker-up chat
 
-PYTHON := arch -arm64 python3
+PYTHON := arch -arm64 /Library/Frameworks/Python.framework/Versions/3.14/bin/python3
 
 help:
 	@echo "Pinecone Vector Forge - Available Commands:"

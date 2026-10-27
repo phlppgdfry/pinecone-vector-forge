@@ -67,7 +67,7 @@ class QueryPayload(BaseModel):
 
 
 class SearchResponse(BaseModel):
-    """Standardized search response with telemetry."""
+    """Standardized search response with telemetry and FinOps accounting."""
     query: str
     hits: List[SearchHit]
     total_hits: int
@@ -76,6 +76,8 @@ class SearchResponse(BaseModel):
     latency_ms: float
     index_connected: bool
     used_mock: bool = False
+    estimated_cost_usd: float = 0.0
+    embedding_model: str = "deterministic-token-hash-1536d"
 
 
 class IndexTelemetry(BaseModel):

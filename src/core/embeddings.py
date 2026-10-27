@@ -1,16 +1,30 @@
-"""Unified Embedding Generation Service supporting Dense and Sparse Vectors."""
+"""Unified Embedding Generation Service supporting Dense and Sparse Vectors.
+
+Includes Model Registry, explicit provider identification (OpenAI, Pinecone Managed Inference,
+or Deterministic Simulation Fallback), content hashing, and L2-normalization.
+"""
 
 import re
 import math
 import hashlib
+from dataclasses import dataclass
 from typing import List, Dict, Tuple, Optional
 import numpy as np
 
 from .config import settings
 
 
+@dataclass
+class EmbeddingModelInfo:
+    provider: str
+    model_name: str
+    dimension: int
+    is_mock: bool
+    version: str
+
+
 class EmbeddingGenerator:
-    """Produces dense vectors (1536d) and sparse lexical vectors."""
+    """Produces dense vectors (1536d) and sparse lexical vectors with explicit provenance."""
 
     def __init__(self, dimension: int = 1536):
         self.dimension = dimension
@@ -25,8 +39,31 @@ class EmbeddingGenerator:
             except Exception:
                 self.openai_client = None
 
+    def get_model_info(self) -> EmbeddingModelInfo:
+        """Returns provenance and model metadata."""
+        if self.openai_client:
+            return EmbeddingModelInfo(
+                provider="openai",
+                model_name="text-embedding-3-small",
+                dimension=self.dimension,
+                is_mock=False,
+                version="3.0.0"
+            )
+        return EmbeddingModelInfo(
+            provider="local_simulation",
+            model_name="deterministic-token-hash-1536d",
+            dimension=self.dimension,
+            is_mock=True,
+            version="1.1.0"
+        )
+
+    @staticmethod
+    def compute_content_hash(text: str) -> str:
+        """Computes SHA-256 fingerprint for document deduplication and change detection."""
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
     def embed_text(self, text: str) -> List[float]:
-        """Generate a 1536-dimensional dense embedding."""
+        """Generate a dense embedding vector."""
         if self.openai_client:
             try:
                 res = self.openai_client.embeddings.create(
@@ -55,8 +92,8 @@ class EmbeddingGenerator:
 
     def _generate_deterministic_embedding(self, text: str) -> List[float]:
         """
-        Generates a high-entropy, token-correlated 1536-dimensional vector.
-        Ensures semantic proximity for shared keywords & synonyms without external calls.
+        Generates a token-correlated, deterministic 1536-dimensional vector for offline testing.
+        NOTE FOR AUDIT: This is a simulation hash, NOT a neural language representation.
         L2-normalized for cosine similarity.
         """
         words = re.findall(r"\w+", text.lower())

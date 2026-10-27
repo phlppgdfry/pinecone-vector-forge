@@ -15,16 +15,16 @@
 
 <p align="center">
   A staff-level reference implementation of an enterprise Vector Search & RAG architecture.<br />
-  Includes <b>3D Vector Constellation Universe</b>, <b>Sparse-Dense Hybrid Search</b>, <b>Managed Pinecone Inference (bge-v2)</b>, <b>Natural Language Self-Querying</b>, <b>Hypothetical Document Embeddings (HyDE)</b>, <b>Hardware Multi-Tenancy via Namespaces</b>, and native <b>Pinecone CLI (<code>pc</code>)</b> GitOps automation.
+  Includes <b>3D Vector Universe</b>, <b>Two-Pass Hybrid Retrieval (RRF & Blending)</b>, <b>Managed Pinecone Inference (bge-v2)</b>, <b>Pinecone Assistant with Grounded Citations</b>, <b>Natural Language Self-Querying</b>, <b>Multi-Tenant Authorization Fencing</b>, and native <b>Pinecone CLI (<code>pc</code>)</b> GitOps automation.
 </p>
 
-[Live Showcase Site](https://phlppgdfry.github.io/pinecone-vector-forge/) • [Quickstart](#-60-second-quickstart) • [Architecture](#-system-architecture) • [Core Patterns](#-production-patterns--snippets) • [Pinecone CLI Recipes](#-pinecone-cli-pc-integration) • [Web UI](#-glassmorphism-web-dashboard) • [Benchmarks](#-performance-benchmarks)
+[Live Showcase Site](https://phlppgdfry.github.io/pinecone-vector-forge/) • [Quickstart](#-60-second-quickstart) • [Architecture](#-system-architecture) • [Engineering Audits](#-enterprise-engineering-documentation--audits) • [Core Patterns](#-production-patterns--snippets) • [Pinecone CLI Recipes](#-pinecone-cli-pc-integration) • [Web UI](#-glassmorphism-web-dashboard) • [Benchmarks](#-performance-benchmarks)
 
 </div>
 
 ---
 
-> 🌐 **Interactive Web Showcase**: Experience the live in-browser 2D vector visualizer and hybrid search simulator at **[phlppgdfry.github.io/pinecone-vector-forge](https://phlppgdfry.github.io/pinecone-vector-forge/)**!
+> 🌐 **Interactive Web Showcase**: Experience the live in-browser 3D vector visualizer and hybrid search simulator at **[phlppgdfry.github.io/pinecone-vector-forge](https://phlppgdfry.github.io/pinecone-vector-forge/)**!
 
 ---
 
@@ -33,16 +33,37 @@
 1. **Zero-Friction Dual Execution Mode**:
    - **Live Cloud Mode**: Connects directly to real Pinecone Serverless indices (`aws/us-east-1`) via official `pinecone>=10.0.0` SDK and Pinecone CLI (`pc`).
    - **Local Simulation Mirror**: Ships with deterministic, L2-normalized 1536-dimensional neural vectors and in-memory cosine engines. Anyone cloning the repo can run tests, the TUI, and the Web UI **immediately without requiring an API key or incurring cloud bills**.
-2. **Convex Hybrid Search & Reciprocal Rank Fusion**:
-   - Seamlessly blends dense semantic embeddings with sparse keyword vectors (BM25) via an interactive $\alpha$ parameter (`0.0` = sparse, `1.0` = dense, `0.7` = optimal enterprise recall).
+2. **Two-Pass Hybrid Search & Reciprocal Rank Fusion**:
+   - Solves the linear algebra scale-invariance of cosine metrics. Combines dense semantic embeddings with sparse keyword vectors (BM25) via calibrated score blending and RRF ($k=60$).
 3. **Enterprise Multi-Tenancy & Zero Data Leakage**:
-   - Hardware-level namespace partitioning ensuring complete isolation for B2B SaaS tenants.
-4. **Hierarchical Parent-Document Chunking**:
-   - Solves the fundamental RAG hallucination dilemma by indexing focused 350-token chunks for vector precision, while retaining parent document linkages for complete LLM context hydration.
+   - Logical namespace partitioning backed by application-layer `TenantAuthorizationGuard` and defense-in-depth metadata filtering.
+4. **Hierarchical & Contextual Parent-Document Chunking**:
+   - Solves the fundamental RAG hallucination dilemma by indexing focused 350-token chunks with macro-context preambles for vector precision, while retaining parent document linkages for complete LLM context hydration.
 5. **Two-Stage Retrieval Pipeline**:
-   - Sub-10ms Approximate Nearest Neighbor (ANN) search followed by cross-attention re-ranking to filter false positives.
-6. **Official Pinecone CLI (`pc`) Integration**:
-   - Scripts and recipes incorporating the official Homebrew-installed `pc` tool for index lifecycle management and CI/CD pipelines.
+   - Sub-10ms Approximate Nearest Neighbor (ANN) search followed by cross-attention re-ranking (`bge-reranker-v2-m3` via native Pinecone Inference API).
+6. **Pinecone Assistant Integration**:
+   - Direct integration with `pc.assistant` for autonomous document ingestion, file parsing, and verifiable citations.
+7. **Production FinOps Accounting**:
+   - Real-time micro-dollar query cost estimation tracking RCU, WCU, and Rerank consumption.
+
+---
+
+## 📚 Enterprise Engineering Documentation & Audits
+
+| Document | Focus & Scope |
+| :--- | :--- |
+| **[Principal AI Engineering Audit](docs/audits/PRINCIPAL_AI_ENGINEERING_AUDIT.md)** | Comprehensive 20-point findings register by 13-member elite engineering board. |
+| **[Pinecone Cloud Verification](docs/audits/PINECONE_CLOUD_VERIFICATION.md)** | Live empirical verification of Serverless index, Assistant, and Inference API. |
+| **[System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md)** | Storage-compute decoupling, microservices topology, and component interaction. |
+| **[Retrieval Pipeline](docs/architecture/RETRIEVAL_PIPELINE.md)** | Cosine scale-invariance proof, two-pass hybrid blending, RRF, and contextual chunks. |
+| **[Threat Model & Security](docs/security/THREAT_MODEL.md)** | STRIDE security analysis, tenant isolation defense-in-depth, prompt injection guards. |
+| **[Retrieval Benchmarks](docs/evaluation/RETRIEVAL_BENCHMARKS.md)** | 25-query evaluation lab measuring MRR@3, NDCG@3, Recall@3, and abstention accuracy. |
+| **[RAG Evaluation](docs/evaluation/RAG_EVALUATION.md)** | Custom Grounded RAG vs. Managed Pinecone Assistant comparative analysis. |
+| **[Observability & SRE](docs/operations/OBSERVABILITY.md)** | SLOs/SLIs, OpenTelemetry tracing spans, and Prometheus `/api/metrics` schema. |
+| **[FinOps Cost Model](docs/operations/COST_MODEL.md)** | Unit economics, RCU/WCU pricing, and TCO comparison vs Qdrant & pgvector. |
+| **[Enterprise Case Study](docs/portfolio/ENTERPRISE_CASE_STUDY.md)** | SRE Runbook Knowledge Platform: BPMN workflows, ADRs, and ROI metrics. |
+| **[Portfolio Readiness](docs/portfolio/PORTFOLIO_READINESS.md)** | Staff/Principal review rubric and architectural differentiation. |
+| **[Technical Roadmap](docs/roadmap/NEXT_STEPS.md)** | Semantic caching with Redis/Upstash, streaming SSE, and drift detection. |
 
 ---
 
@@ -91,7 +112,7 @@ make install
 ```bash
 make test
 ```
-*All 27 unit, pattern, API, and benchmark tests run out-of-the-box in under 2 seconds.*
+*All 31 unit, pattern, API, and benchmark tests run out-of-the-box in under 3 seconds.*
 
 ### 3. Launch the Interactive Web Dashboard
 ```bash
