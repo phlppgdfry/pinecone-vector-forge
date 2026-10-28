@@ -276,8 +276,10 @@ class PineconeManager:
     ) -> List[SearchHit]:
         """Computes exact cosine similarity over local vectors."""
         ns_store = self._local_store.get(namespace, {})
-        if not ns_store:
-            # Check default namespace if requested namespace is empty
+        if not ns_store and namespace == "default":
+            self._seed_local_store()
+            ns_store = self._local_store.get("default", {})
+        elif not ns_store:
             ns_store = self._local_store.get("default", {})
 
         if not ns_store:
@@ -340,6 +342,29 @@ class PineconeManager:
                 if val != condition:
                     return False
         return True
+
+    def _seed_local_store(self):
+        """Seeds local in-memory store for offline tests and zero-credential execution."""
+        try:
+            from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
+            from .embeddings import get_embedding_generator
+            embedder = get_embedding_generator()
+            self._local_store["default"] = {}
+            for doc in KNOWLEDGE_BASE_DOCUMENTS:
+                vec = embedder.embed_text(f"{doc.title}. {doc.content}")
+                self._local_store["default"][doc.id] = {
+                    "id": doc.id,
+                    "values": vec,
+                    "metadata": {
+                        "title": doc.title,
+                        "category": doc.category,
+                        "tags": doc.tags,
+                        "text": doc.content,
+                        **doc.metadata
+                    }
+                }
+        except Exception:
+            pass
 
     def get_telemetry(self) -> IndexTelemetry:
         """Fetch index stats, count, and namespaces."""

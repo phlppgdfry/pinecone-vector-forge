@@ -5,8 +5,8 @@
 **Production-Grade Vector Intelligence, Hybrid Search & RAG Engine powered by Pinecone Serverless**
 
 [![CI](https://github.com/phlppgdfry/pinecone-vector-forge/actions/workflows/ci.yml/badge.svg)](https://github.com/phlppgdfry/pinecone-vector-forge/actions)
-[![Tests Passing](https://img.shields.io/badge/Tests-41%2F41_Passing_100%25-success.svg?style=flat)](https://github.com/phlppgdfry/pinecone-vector-forge)
-[![Audit Score](https://img.shields.io/badge/Audit_Score-9.82%2F10.0_Principal_Tier-00D2FF.svg?style=flat)](docs/audits/FINAL_PRINCIPAL_ENGINEERING_AUDIT.md)
+[![Tests Passing](https://img.shields.io/badge/Tests-47%2F47_Passing_100%25-success.svg?style=flat)](https://github.com/phlppgdfry/pinecone-vector-forge)
+[![Architecture Verified](https://img.shields.io/badge/Architecture-Empirically_Verified_Reference-00D2FF.svg?style=flat)](docs/FINAL_ACCEPTANCE_REPORT.md)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Pinecone v10 Serverless](https://img.shields.io/badge/Pinecone-v10_Serverless-00D2FF.svg?style=flat&logo=pinecone&logoColor=white)](https://www.pinecone.io)
 [![Pinecone Assistant](https://img.shields.io/badge/Pinecone_Assistant-Agentic_RAG-00D2FF.svg?style=flat)](https://docs.pinecone.io)
@@ -53,16 +53,15 @@
 
 | Certified Deliverable | Focus & Scope |
 | :--- | :--- |
-| **[1. Final Principal Engineering Audit](docs/audits/FINAL_PRINCIPAL_ENGINEERING_AUDIT.md)** | Definite certification report, 20-point findings register, verified quality score (9.82/10). |
-| **[2. Hybrid Retrieval Validation](docs/evaluation/HYBRID_RETRIEVAL_VALIDATION.md)** | Eliminating candidate-selection bias, Okapi BM25 inverted index, RRF ($k=60$) & score blending. |
-| **[3. Multi-Tenant Security Audit](docs/security/MULTI_TENANT_SECURITY_AUDIT.md)** | Cryptographic HMAC-SHA256 bearer tokens, namespace fencing, scope checks, and tamper resistance. |
-| **[4. Independent Retrieval Benchmarks](docs/evaluation/INDEPENDENT_RETRIEVAL_BENCHMARKS.md)** | Multi-engine comparison: Pinecone Serverless vs pgvector vs Qdrant vs Weaviate on 1536-d vectors. |
-| **[5. RAG Groundedness Evaluation](docs/evaluation/RAG_GROUNDEDNESS_EVALUATION.md)** | Citation precision, claim entailment, out-of-domain abstention protocol across 25 enterprise docs. |
-| **[6. Pinecone Feature Gap Analysis](docs/architecture/PINECONE_FEATURE_GAP_ANALYSIS.md)** | Native cloud capabilities vs what enterprise production requires and how Vector Forge bridges them. |
-| **[7. Production Security Review](docs/security/PRODUCTION_SECURITY_REVIEW.md)** | SOC2/GDPR compliance, non-root Docker hardening, Pydantic v2 validation, DoS payload bounds. |
-| **[8. Verified FinOps Cost Model](docs/operations/VERIFIED_COST_MODEL.md)** | Storage/compute decoupling, RCU/WCU pricing, $0.00 scale-to-zero vs dedicated pod economics. |
-| **[9. Enterprise Demo Walkthrough](docs/portfolio/ENTERPRISE_DEMO_WALKTHROUGH.md)** | 30-second executive pitch, 6 interactive CLI/GUI demo scenarios, and quickstart commands. |
-| **[10. Final Portfolio Readiness](docs/portfolio/FINAL_PORTFOLIO_READINESS.md)** | Staff/Principal rubric assessment, key architectural differentiators, and production certification. |
+| **[1. Final Acceptance Report & Feature Matrix](docs/FINAL_ACCEPTANCE_REPORT.md)** | Definite acceptance report, empirical classification matrix (`VERIFIED LIVE`, `VERIFIED LOCALLY`, `DOCUMENTATION_DERIVED`). |
+| **[2. Real Vector DB Comparison (Docker + Cloud)](docs/benchmarks/REAL_VECTOR_DATABASE_COMPARISON.md)** | Actual 50-run benchmark of AWS Pinecone Serverless vs Postgres 17 `pgvector` vs `Qdrant` v1.20 Rust containers. |
+| **[3. Hardened Tenant Security Assessment](docs/security/TENANT_SECURITY_ASSESSMENT.md)** | RFC 7519 standard claims, zero-downtime key rotation (`kid`), token revocation denylist, and namespace fencing. |
+| **[4. Independent 9-Partition RAG Evaluation](docs/evaluation/INDEPENDENT_RAG_EVALUATION.md)** | 27-query evaluation across exact keyword, technical codes, multilingual, and abstention protocol. |
+| **[5. Hybrid Retrieval Validation & Zero Bias](docs/evaluation/HYBRID_RETRIEVAL_VALIDATION.md)** | Eliminating candidate-selection bias, Okapi BM25 inverted index, RRF ($k=60$) & score blending. |
+| **[6. Verified FinOps Cost Model](docs/operations/VERIFIED_COST_MODEL.md)** | Storage/compute decoupling, RCU/WCU pricing, $0.00 scale-to-zero vs dedicated pod economics. |
+| **[7. Enterprise Demo Walkthrough](docs/portfolio/ENTERPRISE_DEMO_WALKTHROUGH.md)** | 30-second executive pitch, 6 interactive CLI/GUI demo scenarios, and quickstart commands. |
+| **[8. Production Security Review](docs/security/PRODUCTION_SECURITY_REVIEW.md)** | SOC2/GDPR compliance, non-root Docker hardening, Pydantic v2 validation, DoS payload bounds. |
+| **[9. Pinecone Feature Gap Analysis](docs/architecture/PINECONE_FEATURE_GAP_ANALYSIS.md)** | Native cloud capabilities vs what enterprise production requires and how Vector Forge bridges them. |
 
 ---
 
@@ -111,7 +110,7 @@ make install
 ```bash
 make test
 ```
-*All 31 unit, pattern, API, and benchmark tests run out-of-the-box in under 3 seconds.*
+*All 47 unit, pattern, API, and benchmark tests run out-of-the-box in under 9 seconds.*
 
 ### 3. Launch the Interactive Web Dashboard
 ```bash
@@ -334,17 +333,26 @@ make ui
 
 ---
 
-## 📊 Performance Benchmarks
+## 📊 Real Empirical Vector Database Benchmarks
 
-Micro-benchmarked on Apple Silicon (M-series) against Pinecone Serverless (`aws/us-east-1`):
+Multi-engine benchmark executed on Apple Silicon host across 1536-dimensional vectors with 50 iterations per engine. Every metric is accompanied by its forensic provenance:
 
-| Operation | p50 Latency | p95 Latency | Throughput |
-| :--- | :--- | :--- | :--- |
-| **Vector Embedding Generation** | `0.42 ms` | `1.15 ms` | 2,400 texts/sec |
-| **Sparse Vector TF Indexing** | `0.18 ms` | `0.45 ms` | 5,500 texts/sec |
-| **Pinecone Serverless ANN Retrieval** | `8.20 ms` | `14.50 ms` | Up to 10k QPS |
-| **Pinecone Hosted Inference Rerank (`bge-v2`)** | `0.65 ms` | `1.80 ms` | Managed Cloud |
-| **End-to-End Hybrid Search Pipeline** | `9.50 ms` | `17.80 ms` | Sub-20ms SLA |
+| Vector Engine | Execution Target | P50 Latency | P95 Latency | Mean Latency | Storage / Compute | Base Idle Cost | Metric Provenance |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Pinecone Serverless** | AWS `us-east-1` (Live Index) | **156.88 ms** | **339.34 ms** | **172.93 ms** | Decoupled (S3 Blob + SIMD) | **$0.00 / mo** | `MEASURED_LIVE` |
+| **pgvector (HNSW)** | Docker (PostgreSQL 17) | **0.89 ms** | **1.36 ms** | **0.96 ms** | Coupled to Postgres Instance | **$45.00+ / mo** (RDS) | `MEASURED_LOCAL_DOCKER` |
+| **Qdrant (Rust v1.20)** | Docker (REST API) | **3.00 ms** | **4.75 ms** | **3.31 ms** | Coupled Pod / Mmap | **$35.00+ / mo** | `MEASURED_LOCAL_DOCKER` |
+| **Weaviate (Go)** | Vendor Reference | *6.10 ms* | *14.50 ms* | *7.20 ms* | Coupled Pod / Lucene | **$25.00+ / mo** | `DOCUMENTATION_DERIVED` |
+
+> 📌 **Engineering Insight: The Cloud Colocation Imperative**  
+> Notice that live Pinecone Serverless P50 latency was 156.88 ms when queried from a European developer laptop over public transatlantic TLS 1.3 to AWS `us-east-1`. Local Docker containers on loopback achieved sub-3ms latencies. However, when application workers are colocated in the same AWS region (`us-east-1`), Pinecone Serverless latency drops to 4–12 ms, while retaining true **$0.00 scale-to-zero economics** compared to pgvector's continuous $45+/mo minimum RDS server cost.
+
+### Reproduce the Empirical Benchmarks Locally
+```bash
+# Runs live Pinecone query + starts ephemeral Docker containers for pgvector and Qdrant
+PYTHONPATH=. python3 benchmarks/run_live_benchmark.py
+```
+*Results are serialized to `benchmarks/raw_benchmark_results.json` and documented in `docs/benchmarks/REAL_VECTOR_DATABASE_COMPARISON.md`.*
 
 ---
 

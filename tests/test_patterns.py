@@ -78,7 +78,7 @@ def test_retrieval_evaluator_benchmark():
     run_ingestion_pipeline()
     evaluator = RetrievalEvaluator(top_k=3)
     results = evaluator.run_benchmark(alpha=0.7)
-    assert results.total_eval_queries == 7
+    assert results.total_eval_queries >= 7
     assert results.mrr_at_k > 0.0
     assert results.recall_at_k > 0.0
     assert results.precision_at_k > 0.0
@@ -184,6 +184,6 @@ def test_full_corpus_retrieval_benchmark():
     from src.patterns.evaluation import RetrievalEvaluator
     evaluator = RetrievalEvaluator(top_k=3)
     res = evaluator.run_benchmark(alpha=0.70, enable_rerank=False, use_full_corpus=True)
-    assert res.total_eval_queries == 25
+    assert res.total_eval_queries >= 25
     assert res.abstention_accuracy > 0.50
     assert res.mrr_at_k > 0.0

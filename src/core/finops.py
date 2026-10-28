@@ -50,6 +50,18 @@ class FinOpsCostModel:
         )
 
     @classmethod
+    def estimate_ingestion_cost(cls, total_chunks: int) -> QueryCostEstimate:
+        """Estimates cost for upserting vector chunks (WCUs)."""
+        wcu_cost = total_chunks * cls.WCU_COST_PER_UNIT
+        return QueryCostEstimate(
+            query_type="vector_ingestion",
+            estimated_rcu=0,
+            rerank_docs=0,
+            estimated_cost_usd=round(wcu_cost, 8),
+            cost_breakdown={"wcu_cost_usd": round(wcu_cost, 8)}
+        )
+
+    @classmethod
     def estimate_monthly_storage_cost(cls, vector_count: int, dimension: int = 1536) -> Dict[str, Any]:
         """Calculates storage cost for vectors + metadata."""
         # 1536 float32 = ~6KB per vector + 2KB metadata = ~8KB per record

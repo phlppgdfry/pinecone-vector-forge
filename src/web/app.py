@@ -16,7 +16,7 @@ from ..core.models import QueryPayload, SearchResponse, IndexTelemetry, Document
 from ..core.pinecone_client import get_pinecone_manager
 from ..core.embeddings import get_embedding_generator
 from ..core.finops import FinOpsCostModel
-from ..core.security import get_current_tenant, AuthenticatedTenant, HMACSecuritySigner
+from ..core.security import get_current_tenant, AuthenticatedTenant, HMACSecuritySigner, get_revocation_store
 from ..patterns.hybrid_search import HybridSearchEngine
 from ..patterns.metadata_filtering import MetadataFilterBuilder
 from ..patterns.reranking import TwoStageReranker
@@ -28,6 +28,7 @@ from ..patterns.pinecone_assistant import PineconeAssistantManager
 from ..patterns.multi_tenancy import MultiTenantManager, TenantAuthorizationError
 from ..patterns.evaluation import RetrievalEvaluator
 from ..patterns.vector_db_lab import VectorDBArchitectureLab
+from ..patterns.enterprise_assistant import EnterpriseKnowledgeAssistant
 from ..seed.ingest import run_ingestion_pipeline
 from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
 
@@ -401,6 +402,94 @@ async def get_vector_db_adrs():
     """Retrieve Architectural Decision Records (ADRs) across vector storage engines."""
     lab = VectorDBArchitectureLab()
     return lab.get_adrs()
+
+
+class EnterpriseUploadRequest(BaseModel):
+    title: str = Field(..., min_length=2, max_length=250)
+    content: str = Field(..., min_length=10, max_length=200000)
+    category: str = Field(default="engineering", max_length=64)
+    tags: List[str] = Field(default_factory=list, max_length=20)
+    tenant_id: str = Field(default="default", max_length=64)
+    filename: Optional[str] = Field(default=None, max_length=128)
+
+
+class EnterpriseQueryRequest(BaseModel):
+    query: str = Field(..., min_length=2, max_length=1000)
+    tenant_id: str = Field(default="default", max_length=64)
+    top_k: int = Field(default=5, ge=1, le=20)
+    alpha: float = Field(default=0.70, ge=0.0, le=1.0)
+    rerank: bool = Field(default=True)
+
+
+class TokenRevokeRequest(BaseModel):
+    token: str
+    jti: Optional[str] = None
+
+
+@app.post("/api/enterprise/upload")
+async def enterprise_upload_document(
+    req: EnterpriseUploadRequest,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant)
+):
+    """End-to-end Enterprise Knowledge Assistant Document Ingestion Workflow."""
+    assistant = EnterpriseKnowledgeAssistant()
+    try:
+        res = assistant.ingest_document(
+            title=req.title,
+            content=req.content,
+            category=req.category,
+            tags=req.tags,
+            tenant_id=req.tenant_id,
+            auth_tenant=current_tenant,
+            filename=req.filename
+        )
+        return res
+    except (ValueError, PermissionError, TenantAuthorizationError) as err:
+        status_code = 403 if isinstance(err, (PermissionError, TenantAuthorizationError)) else 400
+        raise HTTPException(status_code=status_code, detail=str(err))
+
+
+@app.post("/api/enterprise/query")
+async def enterprise_query_assistant(
+    req: EnterpriseQueryRequest,
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant)
+):
+    """End-to-End Grounded RAG Query with Verifiable Citations and Abstention Protocol."""
+    assistant = EnterpriseKnowledgeAssistant()
+    try:
+        ans = assistant.query(
+            query=req.query,
+            tenant_id=req.tenant_id,
+            auth_tenant=current_tenant,
+            top_k=req.top_k,
+            alpha=req.alpha,
+            enable_rerank=req.rerank
+        )
+        return ans
+    except (PermissionError, TenantAuthorizationError) as err:
+        raise HTTPException(status_code=403, detail=str(err))
+
+
+@app.delete("/api/enterprise/documents/{doc_id}")
+async def enterprise_delete_document(
+    doc_id: str,
+    tenant_id: str = "default",
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant)
+):
+    """Safe atomic document deletion across Pinecone and Inverted Index with tenant scoping."""
+    assistant = EnterpriseKnowledgeAssistant()
+    try:
+        return assistant.delete_document(doc_id=doc_id, tenant_id=tenant_id, auth_tenant=current_tenant)
+    except (PermissionError, TenantAuthorizationError) as err:
+        raise HTTPException(status_code=403, detail=str(err))
+
+
+@app.post("/api/auth/revoke")
+async def revoke_auth_token(req: TokenRevokeRequest):
+    """Revokes a cryptographic bearer token or JWT ID."""
+    rev_store = get_revocation_store()
+    rev_store.revoke_token(token=req.token, jti=req.jti)
+    return {"status": "success", "message": "Token has been added to revocation denylist."}
 
 
 def run():

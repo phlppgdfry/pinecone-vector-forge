@@ -391,6 +391,15 @@ Operations in namespace A cannot scan, touch, or leak records into namespace B. 
 
 <div style="margin-top: 1rem; padding: 0.6rem; background: rgba(0, 210, 255, 0.1); border-left: 3px solid #00d2ff; font-size: 0.82rem;">
   📄 <strong>Verified Citation:</strong> <code>ARCHITECTURE.md</code> (Pattern B: Zero-Leakage Multi-Tenancy)
+</div>`,
+
+    "abstention": `⚠️ <strong style="color: #ef4444;">[ABSTENTION TRIGGERED &bull; ZERO HALLUCINATION POLICY]</strong><br><br>
+The query asks about topic <em>"capital allocation strategy of Acme Corp in 2029"</em>, which is completely out-of-domain for the authorized knowledge base.<br><br>
+<strong>Confidence Score:</strong> <code>0.1842</code> (below threshold &tau; = 0.3600)<br>
+<strong>Action:</strong> Firm refusal to fabricate answers. The agent abstains cleanly rather than hallucinating facts.
+
+<div style="margin-top: 1rem; padding: 0.6rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; font-size: 0.82rem; color: #fca5a5;">
+  🛑 <strong>Citation Refusal:</strong> No verified grounding context found in authorized corpus.
 </div>`
   };
 
@@ -399,7 +408,9 @@ Operations in namespace A cannot scan, touch, or leak records into namespace B. 
     output.innerHTML = `<span style="color: #00d2ff;">🤖 Querying Pinecone Assistant & validating grounded citations...</span>`;
 
     setTimeout(() => {
-      if (q.includes("idle") || q.includes("serverless")) {
+      if (q.includes("acme") || q.includes("capital") || q.includes("2029") || q.includes("abstain")) {
+        output.innerHTML = ANSWERS["abstention"];
+      } else if (q.includes("idle") || q.includes("serverless")) {
         output.innerHTML = ANSWERS["idle"];
       } else if (q.includes("alpha") || q.includes("hybrid") || q.includes("recall")) {
         output.innerHTML = ANSWERS["alpha"];

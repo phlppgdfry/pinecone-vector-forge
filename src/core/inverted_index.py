@@ -181,7 +181,25 @@ class CorpusInvertedIndexRegistry:
         self._namespaces: Dict[str, NamespaceInvertedIndex] = defaultdict(NamespaceInvertedIndex)
 
     def get_namespace_index(self, namespace: str = "default") -> NamespaceInvertedIndex:
-        return self._namespaces[namespace]
+        idx = self._namespaces[namespace]
+        if namespace == "default" and idx.total_docs == 0:
+            self._seed_default_corpus(idx)
+        return idx
+
+    def _seed_default_corpus(self, idx: NamespaceInvertedIndex) -> None:
+        try:
+            from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
+            for doc in KNOWLEDGE_BASE_DOCUMENTS:
+                idx.add_document(
+                    doc_id=doc.id,
+                    title=doc.title,
+                    text=doc.content,
+                    category=doc.category,
+                    tags=doc.tags,
+                    metadata=doc.metadata
+                )
+        except Exception:
+            pass
 
     def add_document(self, namespace: str, doc_id: str, title: str, text: str, category: str, tags: List[str], metadata: Dict[str, Any]) -> None:
         idx = self.get_namespace_index(namespace)
