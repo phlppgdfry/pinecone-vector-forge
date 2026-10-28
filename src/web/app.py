@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Request, Header
+from fastapi import FastAPI, HTTPException, Request, Header, Depends, Security
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,7 @@ from ..core.models import QueryPayload, SearchResponse, IndexTelemetry, Document
 from ..core.pinecone_client import get_pinecone_manager
 from ..core.embeddings import get_embedding_generator
 from ..core.finops import FinOpsCostModel
+from ..core.security import get_current_tenant, AuthenticatedTenant, HMACSecuritySigner
 from ..patterns.hybrid_search import HybridSearchEngine
 from ..patterns.metadata_filtering import MetadataFilterBuilder
 from ..patterns.reranking import TwoStageReranker
@@ -26,6 +27,7 @@ from ..patterns.similarity_matrix import SimilarityMatrixAnalyzer
 from ..patterns.pinecone_assistant import PineconeAssistantManager
 from ..patterns.multi_tenancy import MultiTenantManager, TenantAuthorizationError
 from ..patterns.evaluation import RetrievalEvaluator
+from ..patterns.vector_db_lab import VectorDBArchitectureLab
 from ..seed.ingest import run_ingestion_pipeline
 from ..seed.sample_data import KNOWLEDGE_BASE_DOCUMENTS
 
@@ -91,21 +93,42 @@ class SearchRequest(BaseModel):
 
 
 @app.post("/api/search", response_model=SearchResponse)
-async def execute_search(req: SearchRequest, x_tenant_id: Optional[str] = Header(None)):
-    """Executes hybrid vector search with metadata filtering, two-stage rerank, and FinOps accounting."""
+async def execute_search(
+    req: SearchRequest,
+    x_tenant_id: Optional[str] = Header(None),
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant)
+):
+    """Executes hybrid vector search with metadata filtering, two-stage rerank, cryptographic tenant fencing, and FinOps accounting."""
     start = time.perf_counter()
 
-    # Tenant authorization boundary
+    # Tenant authorization boundary (cryptographic token prioritized over legacy header)
     if req.namespace.startswith("tenant_"):
-        target_tenant = req.namespace.replace("tenant_", "")
-        tenant_mgr = MultiTenantManager()
-        try:
-            tenant_mgr.authorize_tenant_access(
-                caller_tenant_id=x_tenant_id or "anonymous",
-                requested_tenant_id=target_tenant
+        target_tenant = req.namespace.removeprefix("tenant_")
+        if current_tenant.is_admin:
+            pass
+        elif current_tenant.tenant_id != "anonymous":
+            clean_caller = current_tenant.tenant_id.removeprefix("tenant_")
+            if clean_caller != target_tenant:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Cryptographic Security Violation: Authenticated tenant '{current_tenant.tenant_id}' cannot access namespace of '{target_tenant}'."
+                )
+            if not current_tenant.can_read():
+                raise HTTPException(status_code=403, detail="Forbidden: Token lacks 'read' scope.")
+        elif x_tenant_id:
+            tenant_mgr = MultiTenantManager()
+            try:
+                tenant_mgr.authorize_tenant_access(
+                    caller_tenant_id=x_tenant_id,
+                    requested_tenant_id=target_tenant
+                )
+            except TenantAuthorizationError as err:
+                raise HTTPException(status_code=403, detail=str(err))
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required for tenant namespaces. Supply 'Authorization: Bearer <token>'."
             )
-        except TenantAuthorizationError as err:
-            raise HTTPException(status_code=403, detail=str(err))
 
     engine = HybridSearchEngine()
     reranker = TwoStageReranker()
@@ -166,18 +189,39 @@ class IngestCustomRequest(BaseModel):
 
 
 @app.post("/api/ingest")
-async def ingest_document(req: IngestCustomRequest, x_tenant_id: Optional[str] = Header(None)):
-    """Chunk, vectorize, and upsert a custom document into Pinecone with size limits and tenant security."""
+async def ingest_document(
+    req: IngestCustomRequest,
+    x_tenant_id: Optional[str] = Header(None),
+    current_tenant: AuthenticatedTenant = Depends(get_current_tenant)
+):
+    """Chunk, vectorize, and upsert a custom document into Pinecone with cryptographic tenant security."""
     if req.namespace.startswith("tenant_"):
-        target_tenant = req.namespace.replace("tenant_", "")
-        tenant_mgr = MultiTenantManager()
-        try:
-            tenant_mgr.authorize_tenant_access(
-                caller_tenant_id=x_tenant_id or "anonymous",
-                requested_tenant_id=target_tenant
+        target_tenant = req.namespace.removeprefix("tenant_")
+        if current_tenant.is_admin:
+            pass
+        elif current_tenant.tenant_id != "anonymous":
+            clean_caller = current_tenant.tenant_id.removeprefix("tenant_")
+            if clean_caller != target_tenant:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Cryptographic Security Violation: Authenticated tenant '{current_tenant.tenant_id}' cannot write to namespace '{target_tenant}'."
+                )
+            if not current_tenant.can_write():
+                raise HTTPException(status_code=403, detail="Forbidden: Token lacks 'write' scope.")
+        elif x_tenant_id:
+            tenant_mgr = MultiTenantManager()
+            try:
+                tenant_mgr.authorize_tenant_access(
+                    caller_tenant_id=x_tenant_id,
+                    requested_tenant_id=target_tenant
+                )
+            except TenantAuthorizationError as err:
+                raise HTTPException(status_code=403, detail=str(err))
+        else:
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication required for tenant namespaces. Supply 'Authorization: Bearer <token>'."
             )
-        except TenantAuthorizationError as err:
-            raise HTTPException(status_code=403, detail=str(err))
 
     import uuid
     doc_id = f"doc_{uuid.uuid4().hex[:8]}"
@@ -316,6 +360,47 @@ async def get_metrics():
     for ns, count in telem.namespaces.items():
         lines.append(f'vectorforge_namespace_vectors{{namespace="{ns}"}} {count}')
     return HTMLResponse("\n".join(lines), media_type="text/plain; version=0.0.4")
+
+
+class TokenIssueRequest(BaseModel):
+    tenant_id: str = Field(..., min_length=2, max_length=64)
+    role: str = Field(default="tenant_admin", max_length=32)
+    scopes: List[str] = Field(default_factory=lambda: ["read", "write", "delete"])
+    ttl_seconds: int = Field(default=3600, ge=60, le=86400 * 30)
+
+
+@app.post("/api/auth/token")
+async def issue_tenant_token(req: TokenIssueRequest):
+    """Issues a cryptographically signed HMAC-SHA256 bearer token for tenant isolation."""
+    token = HMACSecuritySigner.issue_token(
+        tenant_id=req.tenant_id,
+        role=req.role,
+        scopes=req.scopes,
+        ttl_seconds=req.ttl_seconds
+    )
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "tenant_id": req.tenant_id,
+        "role": req.role,
+        "scopes": req.scopes,
+        "expires_in_seconds": req.ttl_seconds
+    }
+
+
+@app.get("/api/vector-dbs/benchmark")
+async def get_vector_db_benchmarks():
+    """Independent multi-engine vector database benchmark (Pinecone Serverless vs pgvector vs Qdrant vs Weaviate)."""
+    lab = VectorDBArchitectureLab()
+    report = lab.run_comparative_benchmark()
+    return report.to_dict()
+
+
+@app.get("/api/vector-dbs/adrs")
+async def get_vector_db_adrs():
+    """Retrieve Architectural Decision Records (ADRs) across vector storage engines."""
+    lab = VectorDBArchitectureLab()
+    return lab.get_adrs()
 
 
 def run():

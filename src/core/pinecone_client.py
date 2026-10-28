@@ -70,7 +70,10 @@ class PineconeManager:
         total_upserted = 0
         start_time = time.perf_counter()
 
-        # Always maintain local store as local mirror/cache
+        # Always maintain local store as local mirror/cache & index into BM25 inverted index
+        from .inverted_index import get_inverted_index_registry
+        inv_registry = get_inverted_index_registry()
+
         if namespace not in self._local_store:
             self._local_store[namespace] = {}
         for r in records:
@@ -79,6 +82,16 @@ class PineconeManager:
                 "sparse_values": r.sparse_values,
                 "metadata": r.metadata
             }
+            meta = r.metadata or {}
+            inv_registry.add_document(
+                namespace=namespace,
+                doc_id=r.id,
+                title=str(meta.get("parent_title", meta.get("title", "Untitled"))),
+                text=str(meta.get("text", "")),
+                category=str(meta.get("category", "general")),
+                tags=list(meta.get("tags", [])),
+                metadata=meta
+            )
 
         # Live Pinecone upsert if connected
         if self.is_connected and self.index:

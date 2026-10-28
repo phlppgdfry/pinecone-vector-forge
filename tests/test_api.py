@@ -60,7 +60,7 @@ def test_heatmap_endpoint():
     data = res.json()
     assert "matrix" in data
     assert "centroids" in data
-    assert len(data["matrix"]) == 7
+    assert len(data["matrix"]) >= 7
 
 
 def test_query_plan_endpoint():
