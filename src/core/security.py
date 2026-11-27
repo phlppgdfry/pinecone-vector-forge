@@ -11,6 +11,8 @@ heavy dependencies. Implements:
 """
 
 import hmac
+import logging
+import secrets
 import hashlib
 import base64
 import json
@@ -89,7 +91,14 @@ class HMACSecuritySigner:
     PRIMARY_KID = "vf-2026-k1"
 
     # Multi-Key Registry for Seamless Zero-Downtime Key Rotation
-    _SALT_BASE = settings.pinecone_api_key or "vector-forge-enterprise-security-salt-2026"
+    # No hard-coded fallback: a secret that is in the source code lets anyone mint valid
+    # tokens. Without a configured key, sign with a random per-process secret instead
+    # (tokens then stop validating after a restart, which is the safe failure).
+    _SALT_BASE = settings.pinecone_api_key or secrets.token_hex(32)
+    if not settings.pinecone_api_key:
+        logging.getLogger(__name__).warning(
+            "No Pinecone API key configured: signing tokens with an ephemeral per-process secret."
+        )
     KEY_REGISTRY: Dict[str, bytes] = {
         "vf-2026-k1": hashlib.sha256(f"{_SALT_BASE}:k1:current".encode("utf-8")).digest(),
         "vf-2026-k0": hashlib.sha256(f"{_SALT_BASE}:k0:legacy".encode("utf-8")).digest(),
